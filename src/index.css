@@ -8,6 +8,11 @@
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
+    
+    /* Matrix theme colors */
+    --matrix-primary: 160 84% 39%;
+    --matrix-secondary: 158 64% 52%;
+    --matrix-accent: 156 72% 67%;
 
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
