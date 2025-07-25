@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { ArrowRight, Zap, Workflow, Bot, Plus, Paperclip, Upload } from "lucide-react";
+import { ArrowRight, Workflow, Bot } from "lucide-react";
 export const Home = () => {
   const [prompt, setPrompt] = useState("");
   const [isAgent, setIsAgent] = useState(false);
@@ -11,7 +11,7 @@ export const Home = () => {
     // TODO: Handle workflow generation
     console.log("Generating workflow for:", prompt);
   };
-  const quickStarters = ["Sync Shopify orders to Google Sheets", "Send Slack notifications for new leads", "Create a customer onboarding flow", "Build an email drip campaign", "Automate invoice processing", "Set up social media posting"];
+  
   return <div className="min-h-screen bg-black text-white relative overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-green-400/5"></div>
@@ -51,16 +51,33 @@ export const Home = () => {
 
           {/* Main Input Section */}
           <div className="w-full max-w-3xl mb-16">
-            {/* Mode Toggle */}
-            <div className="flex items-center justify-center gap-6 mb-8">
-              <div className={`flex items-center gap-2 transition-all duration-300 ${!isAgent ? 'text-white' : 'text-gray-500'}`}>
-                <Workflow className="w-5 h-5" />
-                <span className="font-medium">Workflow</span>
-              </div>
-              <Switch checked={isAgent} onCheckedChange={setIsAgent} className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-gray-700 scale-110" />
-              <div className={`flex items-center gap-2 transition-all duration-300 ${isAgent ? 'text-white' : 'text-gray-500'}`}>
-                <Bot className="w-5 h-5" />
-                <span className="font-medium">AI Agent</span>
+            {/* Mode Toggle - Dual-sided Interface */}
+            <div className="flex items-center justify-center mb-8">
+              <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-2xl">
+                <div className="flex">
+                  <button
+                    onClick={() => setIsAgent(false)}
+                    className={`flex items-center gap-3 px-8 py-4 rounded-xl transition-all duration-300 relative ${
+                      !isAgent 
+                        ? 'bg-gradient-to-r from-green-400 to-green-500 text-black shadow-lg' 
+                        : 'text-gray-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <Workflow className="w-5 h-5" />
+                    <span className="font-semibold text-lg">Workflow</span>
+                  </button>
+                  <button
+                    onClick={() => setIsAgent(true)}
+                    className={`flex items-center gap-3 px-8 py-4 rounded-xl transition-all duration-300 relative ${
+                      isAgent 
+                        ? 'bg-gradient-to-r from-green-400 to-green-500 text-black shadow-lg' 
+                        : 'text-gray-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <Bot className="w-5 h-5" />
+                    <span className="font-semibold text-lg">AI Agent</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -83,24 +100,8 @@ export const Home = () => {
             </form>
           </div>
 
-          {/* Quick Starters */}
-          <div className="w-full max-w-4xl">
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {quickStarters.map((starter, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  className="border-white/10 text-gray-300 hover:text-white hover:border-green-400/50 hover:bg-green-400/5 backdrop-blur-sm transition-all duration-300 p-4 h-auto text-left justify-start"
-                  onClick={() => setPrompt(starter)}
-                >
-                  <Plus className="w-4 h-4 mr-3 text-green-400 flex-shrink-0" />
-                  <span className="text-sm font-medium">{starter}</span>
-                </Button>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
