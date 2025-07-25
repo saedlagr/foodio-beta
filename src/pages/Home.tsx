@@ -3,28 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { ArrowRight, Zap, Workflow, Bot, Plus, Paperclip, Upload } from "lucide-react";
-
 export const Home = () => {
   const [prompt, setPrompt] = useState("");
   const [isAgent, setIsAgent] = useState(false);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // TODO: Handle workflow generation
     console.log("Generating workflow for:", prompt);
   };
-
-  const quickStarters = [
-    "Sync Shopify orders to Google Sheets",
-    "Send Slack notifications for new leads", 
-    "Create a customer onboarding flow",
-    "Build an email drip campaign",
-    "Automate invoice processing",
-    "Set up social media posting"
-  ];
-
-  return (
-    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+  const quickStarters = ["Sync Shopify orders to Google Sheets", "Send Slack notifications for new leads", "Create a customer onboarding flow", "Build an email drip campaign", "Automate invoice processing", "Set up social media posting"];
+  return <div className="min-h-screen bg-black text-white relative overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-green-400/5"></div>
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-green-400/10 rounded-full blur-3xl animate-pulse"></div>
@@ -33,11 +21,7 @@ export const Home = () => {
       <div className="relative z-10 max-w-6xl mx-auto">
         {/* Header */}
         <header className="flex justify-between items-center p-8 backdrop-blur-sm">
-          <img 
-            src="/lovable-uploads/8c03dabd-dd83-453a-9034-8a2363b6e7de.png" 
-            alt="Floest" 
-            className="h-10 w-auto"
-          />
+          <img src="/lovable-uploads/8c03dabd-dd83-453a-9034-8a2363b6e7de.png" alt="Floest" className="h-10 w-auto" />
           
           <nav className="hidden md:flex items-center space-x-8">
             <a href="#" className="text-gray-400 hover:text-green-400 transition-colors font-medium">Community</a>
@@ -73,11 +57,7 @@ export const Home = () => {
                 <Workflow className="w-5 h-5" />
                 <span className="font-medium">Workflow</span>
               </div>
-              <Switch
-                checked={isAgent}
-                onCheckedChange={setIsAgent}
-                className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-gray-700 scale-110"
-              />
+              <Switch checked={isAgent} onCheckedChange={setIsAgent} className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-gray-700 scale-110" />
               <div className={`flex items-center gap-2 transition-all duration-300 ${isAgent ? 'text-white' : 'text-gray-500'}`}>
                 <Bot className="w-5 h-5" />
                 <span className="font-medium">AI Agent</span>
@@ -91,19 +71,10 @@ export const Home = () => {
                 <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-2xl">
                   <div className="flex items-center gap-4">
                     <div className="flex-1 px-6">
-                      <Input
-                        value={prompt}
-                        onChange={(e) => setPrompt(e.target.value)}
-                        placeholder={isAgent ? "Describe the AI agent you want to create..." : "Describe the workflow you want to automate..."}
-                        className="bg-transparent border-none text-white placeholder:text-gray-400 focus:outline-none focus:ring-0 px-0 text-lg h-16 font-medium"
-                      />
+                      <Input value={prompt} onChange={e => setPrompt(e.target.value)} placeholder={isAgent ? "Describe the AI agent you want to create..." : "Describe the workflow you want to automate..."} className="bg-transparent border-none text-white placeholder:text-gray-400 focus:outline-none focus:ring-0 px-0 text-lg h-16 font-medium" />
                     </div>
                     
-                    <Button
-                      type="submit"
-                      disabled={!prompt.trim()}
-                      className="bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-black rounded-xl px-8 h-14 font-semibold shadow-lg hover:shadow-green-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
+                    <Button type="submit" disabled={!prompt.trim()} className="bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-black rounded-xl px-8 h-14 font-semibold shadow-lg hover:shadow-green-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
                       <ArrowRight className="h-5 w-5" />
                     </Button>
                   </div>
@@ -114,23 +85,12 @@ export const Home = () => {
 
           {/* Quick Starters */}
           <div className="w-full max-w-4xl">
-            <p className="text-gray-400 mb-8 text-lg font-medium">Popular automations</p>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {quickStarters.map((starter, index) => (
-                <button
-                  key={index}
-                  onClick={() => setPrompt(starter)}
-                  className="group p-6 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-green-400/30 rounded-xl text-left transition-all duration-300 hover:transform hover:scale-105"
-                >
-                  <div className="text-gray-300 group-hover:text-white transition-colors duration-300 font-medium">
-                    {starter}
-                  </div>
-                </button>
-              ))}
+              {quickStarters.map((starter, index) => {})}
             </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
