@@ -87,7 +87,17 @@ export const Home = () => {
           <div className="w-full max-w-4xl">
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {quickStarters.map((starter, index) => {})}
+              {quickStarters.map((starter, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  className="border-white/10 text-gray-300 hover:text-white hover:border-green-400/50 hover:bg-green-400/5 backdrop-blur-sm transition-all duration-300 p-4 h-auto text-left justify-start"
+                  onClick={() => setPrompt(starter)}
+                >
+                  <Plus className="w-4 h-4 mr-3 text-green-400 flex-shrink-0" />
+                  <span className="text-sm font-medium">{starter}</span>
+                </Button>
+              ))}
             </div>
           </div>
         </div>
