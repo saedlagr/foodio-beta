@@ -89,7 +89,7 @@ export const Home = () => {
                 <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-2xl">
                   <div className="flex items-center gap-4">
                     <div className="flex-1 px-6">
-                      <Input value={prompt} onChange={e => setPrompt(e.target.value)} placeholder={isAgent ? "Describe the AI agent you want to create..." : "Describe the workflow you want to automate..."} className="bg-transparent border-none text-white placeholder:text-gray-400 focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-transparent focus:shadow-none px-0 text-lg h-16 font-medium" />
+                      <Input value={prompt} onChange={e => setPrompt(e.target.value)} placeholder={isAgent ? "Describe the AI agent you want to create..." : "Describe the workflow you want to automate..."} className="bg-transparent border-none text-white placeholder:text-gray-400 focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-transparent focus:shadow-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 px-0 text-lg h-16 font-medium" />
                     </div>
                     
                     <Button type="submit" disabled={!prompt.trim()} className="bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-black rounded-xl px-8 h-14 font-semibold shadow-lg hover:shadow-green-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
