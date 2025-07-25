@@ -24,94 +24,107 @@ export const Home = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-green-400/5"></div>
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-green-400/10 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-green-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      
+      <div className="relative z-10 max-w-6xl mx-auto">
         {/* Header */}
-        <header className="flex justify-between items-center p-6">
+        <header className="flex justify-between items-center p-8 backdrop-blur-sm">
           <img 
             src="/lovable-uploads/8c03dabd-dd83-453a-9034-8a2363b6e7de.png" 
             alt="Floest" 
-            className="h-8 w-auto"
+            className="h-10 w-auto"
           />
           
           <nav className="hidden md:flex items-center space-x-8">
-            <a href="#" className="text-gray-400 hover:text-green-400 transition-colors text-sm">Community</a>
-            <a href="#" className="text-gray-400 hover:text-green-400 transition-colors text-sm">Enterprise</a>
-            <a href="#" className="text-gray-400 hover:text-green-400 transition-colors text-sm">Pricing</a>
-            <Button variant="outline" className="border-green-400 text-green-400 hover:bg-green-400 hover:text-black text-sm">
+            <a href="#" className="text-gray-400 hover:text-green-400 transition-colors font-medium">Community</a>
+            <a href="#" className="text-gray-400 hover:text-green-400 transition-colors font-medium">Enterprise</a>
+            <a href="#" className="text-gray-400 hover:text-green-400 transition-colors font-medium">Pricing</a>
+            <Button variant="outline" className="border-green-400/50 text-green-400 hover:bg-green-400 hover:text-black backdrop-blur-sm">
               Sign In
             </Button>
           </nav>
         </header>
 
         {/* Main Content */}
-        <div className="flex flex-col items-center justify-center px-6 py-32 text-center">
-          <h1 className="text-6xl md:text-8xl font-light mb-8 text-white">
-            Build something
-            <br />
-            <span className="text-green-400">
-              Automated
-            </span>
-          </h1>
-          
-          <p className="text-xl text-gray-400 mb-16 max-w-lg">
-            Automate your workflows.
-          </p>
-
-          {/* Main Input */}
-          <div className="w-full max-w-2xl mb-12">
-            {/* Toggle */}
-            <div className="flex items-center justify-center gap-4 mb-6">
-              <span className={`text-sm ${!isAgent ? 'text-white' : 'text-gray-400'}`}>
-                <Workflow className="inline w-4 h-4 mr-1" />
-                Workflow
+        <div className="flex flex-col items-center justify-center px-8 py-20 text-center">
+          <div className="mb-16 animate-fade-in">
+            <h1 className="text-5xl md:text-7xl font-light mb-6 text-white leading-tight">
+              Build something
+              <br />
+              <span className="bg-gradient-to-r from-green-400 to-green-300 bg-clip-text text-transparent">
+                Automated
               </span>
+            </h1>
+            
+            <p className="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
+              Create powerful workflows and AI agents that automate your business processes.
+            </p>
+          </div>
+
+          {/* Main Input Section */}
+          <div className="w-full max-w-3xl mb-16">
+            {/* Mode Toggle */}
+            <div className="flex items-center justify-center gap-6 mb-8">
+              <div className={`flex items-center gap-2 transition-all duration-300 ${!isAgent ? 'text-white' : 'text-gray-500'}`}>
+                <Workflow className="w-5 h-5" />
+                <span className="font-medium">Workflow</span>
+              </div>
               <Switch
                 checked={isAgent}
                 onCheckedChange={setIsAgent}
-                className="data-[state=checked]:bg-green-400"
+                className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-gray-700 scale-110"
               />
-              <span className={`text-sm ${isAgent ? 'text-white' : 'text-gray-400'}`}>
-                <Bot className="inline w-4 h-4 mr-1" />
-                Agent
-              </span>
+              <div className={`flex items-center gap-2 transition-all duration-300 ${isAgent ? 'text-white' : 'text-gray-500'}`}>
+                <Bot className="w-5 h-5" />
+                <span className="font-medium">AI Agent</span>
+              </div>
             </div>
 
-            <form onSubmit={handleSubmit}>
-              <div className="relative bg-white/5 border border-gray-800 rounded-2xl p-1 shadow-[0_0_20px_rgba(34,197,94,0.15)]">
-                <div className="flex items-center">
-                  <div className="flex-1 px-4">
-                    <Input
-                      value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
-                      placeholder={isAgent ? "Ask Floest to create an AI agent..." : "Ask Floest to create a workflow..."}
-                      className="bg-transparent border-none text-white placeholder:text-gray-500 focus:outline-none focus:ring-0 px-0 text-lg h-14"
-                    />
+            {/* Input Container */}
+            <form onSubmit={handleSubmit} className="mb-12">
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 to-green-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300"></div>
+                <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-2xl">
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 px-6">
+                      <Input
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        placeholder={isAgent ? "Describe the AI agent you want to create..." : "Describe the workflow you want to automate..."}
+                        className="bg-transparent border-none text-white placeholder:text-gray-400 focus:outline-none focus:ring-0 px-0 text-lg h-16 font-medium"
+                      />
+                    </div>
+                    
+                    <Button
+                      type="submit"
+                      disabled={!prompt.trim()}
+                      className="bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-black rounded-xl px-8 h-14 font-semibold shadow-lg hover:shadow-green-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ArrowRight className="h-5 w-5" />
+                    </Button>
                   </div>
-                  
-                  <Button
-                    type="submit"
-                    disabled={!prompt.trim()}
-                    className="bg-green-400 hover:bg-green-500 text-black rounded-xl px-6 h-12 mr-1 shadow-[0_0_15px_rgba(34,197,94,0.3)]"
-                  >
-                    <ArrowRight className="h-5 w-5" />
-                  </Button>
                 </div>
               </div>
             </form>
           </div>
 
           {/* Quick Starters */}
-          <div className="w-full max-w-3xl">
-            <p className="text-gray-500 mb-6 text-sm">Try one of these</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="w-full max-w-4xl">
+            <p className="text-gray-400 mb-8 text-lg font-medium">Popular automations</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {quickStarters.map((starter, index) => (
                 <button
                   key={index}
                   onClick={() => setPrompt(starter)}
-                  className="p-4 bg-white/5 hover:bg-white/10 border border-gray-800 rounded-xl text-left text-sm text-gray-300 hover:text-white transition-all duration-200"
+                  className="group p-6 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-green-400/30 rounded-xl text-left transition-all duration-300 hover:transform hover:scale-105"
                 >
-                  {starter}
+                  <div className="text-gray-300 group-hover:text-white transition-colors duration-300 font-medium">
+                    {starter}
+                  </div>
                 </button>
               ))}
             </div>
