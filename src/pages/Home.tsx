@@ -12,7 +12,8 @@ export const Home = () => {
     console.log("Generating workflow for:", prompt);
   };
   
-  return <div className="min-h-screen bg-black text-white relative overflow-hidden">
+  return (
+    <div className="min-h-screen bg-black text-white relative overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-green-400/5"></div>
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-green-400/10 rounded-full blur-3xl animate-pulse"></div>
