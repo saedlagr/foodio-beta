@@ -1,5 +1,6 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -17,6 +18,59 @@ const Index = () => {
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    // Check if we have an initial prompt from navigation state
+    const state = location.state as { initialPrompt?: string; mode?: string } | null;
+    if (state?.initialPrompt) {
+      // Auto-send the initial prompt
+      const initialMessage: Message = {
+        id: Date.now().toString(),
+        content: state.initialPrompt,
+        isUser: true,
+        timestamp: new Date(),
+      };
+      setMessages([initialMessage]);
+      
+      // Send to backend immediately
+      setIsLoading(true);
+      fetch('https://sgxlabs.app.n8n.cloud/webhook/bac2d4c8-7e50-42c4-9d80-b08c09fd6f50', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: state.initialPrompt,
+          mode: state.mode,
+          timestamp: new Date().toISOString(),
+        }),
+      })
+      .then(response => response.text())
+      .then(data => {
+        const botMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: data || "I'll help you build that!",
+          isUser: false,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, botMessage]);
+      })
+      .catch(error => {
+        console.error('Error sending initial message:', error);
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: "I'm ready to help you build! What would you like to create?",
+          isUser: false,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+    }
+  }, [location.state]);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -6,10 +7,19 @@ import { ArrowRight, Workflow, Bot } from "lucide-react";
 export const Home = () => {
   const [prompt, setPrompt] = useState("");
   const [isAgent, setIsAgent] = useState(false);
+  const navigate = useNavigate();
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Handle workflow generation
-    console.log("Generating workflow for:", prompt);
+    if (prompt.trim()) {
+      // Navigate to chat interface with the prompt and mode
+      navigate('/chat', { 
+        state: { 
+          initialPrompt: prompt.trim(),
+          mode: isAgent ? 'agent' : 'workflow'
+        }
+      });
+    }
   };
   
   return (
