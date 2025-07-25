@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { ArrowRight, Zap, Workflow, Bot, Plus, Paperclip, Upload } from "lucide-react";
 
 export const Home = () => {
   const [prompt, setPrompt] = useState("");
+  const [isAgent, setIsAgent] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,14 +60,31 @@ export const Home = () => {
 
           {/* Main Input */}
           <div className="w-full max-w-2xl mb-12">
+            {/* Toggle */}
+            <div className="flex items-center justify-center gap-4 mb-6">
+              <span className={`text-sm ${!isAgent ? 'text-white' : 'text-gray-400'}`}>
+                <Workflow className="inline w-4 h-4 mr-1" />
+                Workflow
+              </span>
+              <Switch
+                checked={isAgent}
+                onCheckedChange={setIsAgent}
+                className="data-[state=checked]:bg-green-400"
+              />
+              <span className={`text-sm ${isAgent ? 'text-white' : 'text-gray-400'}`}>
+                <Bot className="inline w-4 h-4 mr-1" />
+                Agent
+              </span>
+            </div>
+
             <form onSubmit={handleSubmit}>
-              <div className="relative bg-white/5 border border-gray-800 rounded-2xl p-1">
+              <div className="relative bg-white/5 border border-gray-800 rounded-2xl p-1 shadow-[0_0_20px_rgba(34,197,94,0.15)]">
                 <div className="flex items-center">
                   <div className="flex-1 px-4">
                     <Input
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
-                      placeholder="Ask Floest to create a workflow..."
+                      placeholder={isAgent ? "Ask Floest to create an AI agent..." : "Ask Floest to create a workflow..."}
                       className="bg-transparent border-none text-white placeholder:text-gray-500 focus:outline-none focus:ring-0 px-0 text-lg h-14"
                     />
                   </div>
@@ -73,7 +92,7 @@ export const Home = () => {
                   <Button
                     type="submit"
                     disabled={!prompt.trim()}
-                    className="bg-green-400 hover:bg-green-500 text-black rounded-xl px-6 h-12 mr-1"
+                    className="bg-green-400 hover:bg-green-500 text-black rounded-xl px-6 h-12 mr-1 shadow-[0_0_15px_rgba(34,197,94,0.3)]"
                   >
                     <ArrowRight className="h-5 w-5" />
                   </Button>
