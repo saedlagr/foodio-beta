@@ -12,12 +12,15 @@ export const Home = () => {
   
   // Animated title cycling
   const titles = [
-    { text: "Build something", highlight: "Automated" },
+    { text: "Build something", highlight: "Automated", text2: "" },
     { text: "The", highlight: "Vibe Coder's", text2: "Best Friend" },
     { text: "The", highlight: "Automator's", text2: "Automator" },
     { text: "", highlight: "Agents & Workflows", text2: "Made Easy" },
     { text: "Your", highlight: "AI Development", text2: "Partner" },
-    { text: "Code", highlight: "Smarter", text2: ", Not Harder" }
+    { text: "Code", highlight: "Smarter", text2: ", Not Harder" },
+    { text: "", highlight: "Backend Magic", text2: "Made Simple" },
+    { text: "From", highlight: "Frontend to APIs", text2: "Instantly" },
+    { text: "", highlight: "No-Code", text2: "Meets Pro-Code" }
   ];
   
   const [currentTitleIndex, setCurrentTitleIndex] = useState(0);
@@ -30,7 +33,7 @@ export const Home = () => {
         setCurrentTitleIndex((prev) => (prev + 1) % titles.length);
         setIsAnimating(false);
       }, 500);
-    }, 3000);
+    }, 4500);
     
     return () => clearInterval(interval);
   }, [titles.length]);
@@ -74,31 +77,19 @@ export const Home = () => {
         {/* Main Content */}
         <div className="flex flex-col items-center justify-center px-8 py-20 text-center">
           <div className="mb-16 animate-fade-in">
-            <h1 className="text-5xl md:text-7xl font-light mb-6 text-foreground leading-tight min-h-[2.5em] flex flex-col items-center justify-center">
-              <span 
+            <h1 className="text-5xl md:text-7xl font-light mb-6 text-foreground leading-tight min-h-[1.5em] flex flex-col items-center justify-center">
+              <span
                 className={`transition-all duration-500 ease-in-out ${
                   isAnimating 
                     ? 'opacity-0 transform -translate-y-4 scale-95' 
                     : 'opacity-100 transform translate-y-0 scale-100'
                 }`}
               >
-                {currentTitleIndex === 0 ? (
-                  <>
-                    <span className="text-foreground">{titles[currentTitleIndex].text}</span>
-                    <br />
-                    <span className="bg-gradient-to-r from-green-400 to-green-300 bg-clip-text text-transparent">
-                      {titles[currentTitleIndex].highlight}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-foreground">{titles[currentTitleIndex].text} </span>
-                    <span className="bg-gradient-to-r from-green-400 to-green-300 bg-clip-text text-transparent">
-                      {titles[currentTitleIndex].highlight}
-                    </span>
-                    <span className="text-foreground"> {titles[currentTitleIndex].text2}</span>
-                  </>
-                )}
+                <span className="text-foreground">{titles[currentTitleIndex].text} </span>
+                <span className="bg-gradient-to-r from-green-400 to-green-300 bg-clip-text text-transparent">
+                  {titles[currentTitleIndex].highlight}
+                </span>
+                <span className="text-foreground"> {titles[currentTitleIndex].text2}</span>
               </span>
             </h1>
             
