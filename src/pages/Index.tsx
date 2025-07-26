@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Send, Paperclip } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface Message {
   id: string;
@@ -146,7 +147,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+    <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-green-400/5"></div>
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-green-400/10 rounded-full blur-3xl animate-pulse"></div>
@@ -154,23 +155,26 @@ const Index = () => {
       
       <div className="relative z-10 flex flex-col min-h-screen">
         {/* Header */}
-        <header className="flex justify-between items-center p-6 backdrop-blur-sm border-b border-white/10">
+        <header className="flex justify-between items-center p-6 backdrop-blur-sm border-b border-border">
           <img src="/lovable-uploads/8c03dabd-dd83-453a-9034-8a2363b6e7de.png" alt="Floest" className="h-8 w-auto" />
-          <h1 className="text-xl font-semibold bg-gradient-to-r from-green-400 to-green-300 bg-clip-text text-transparent">
-            AI Assistant
-          </h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl font-semibold bg-gradient-to-r from-green-400 to-green-300 bg-clip-text text-transparent">
+              AI Assistant
+            </h1>
+            <ThemeToggle />
+          </div>
         </header>
         
         <div className="flex-1 overflow-hidden flex flex-col max-w-4xl mx-auto w-full">
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {messages.length === 0 && (
-              <div className="text-center text-gray-400 py-20">
+              <div className="text-center text-muted-foreground py-20">
                 <div className="mb-6">
                   <div className="w-16 h-16 bg-green-400/20 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Send className="w-8 h-8 text-green-400" />
                   </div>
                   <p className="text-lg">Ready to build something amazing?</p>
-                  <p className="text-sm text-gray-500 mt-2">Send a message to get started</p>
+                  <p className="text-sm text-muted-foreground/70 mt-2">Send a message to get started</p>
                 </div>
               </div>
             )}
@@ -182,12 +186,12 @@ const Index = () => {
               >
                 <div className={`max-w-[80%] ${
                   message.isUser 
-                    ? 'bg-gradient-to-r from-green-400 to-green-500 text-black' 
-                    : 'bg-white/5 backdrop-blur-xl border border-white/10 text-white'
+                    ? 'bg-gradient-to-r from-green-400 to-green-500 text-primary-foreground' 
+                    : 'bg-card/50 backdrop-blur-xl border border-border text-foreground'
                 } rounded-2xl p-4 shadow-xl`}>
                   <p className="text-sm leading-relaxed">{message.content}</p>
                   <span className={`text-xs mt-2 block ${
-                    message.isUser ? 'text-black/70' : 'text-gray-400'
+                    message.isUser ? 'text-primary-foreground/70' : 'text-muted-foreground'
                   }`}>
                     {message.timestamp.toLocaleTimeString()}
                   </span>
@@ -197,14 +201,14 @@ const Index = () => {
             
             {isLoading && (
               <div className="flex justify-start animate-fade-in">
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-xl">
+                <div className="bg-card/50 backdrop-blur-xl border border-border rounded-2xl p-4 shadow-xl">
                   <div className="flex space-x-2 items-center">
                     <div className="flex space-x-1">
                       <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce"></div>
                       <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                       <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                     </div>
-                    <span className="text-gray-400 text-sm ml-2">Thinking...</span>
+                    <span className="text-muted-foreground text-sm ml-2">Thinking...</span>
                   </div>
                 </div>
               </div>
@@ -221,7 +225,7 @@ const Index = () => {
                     variant="ghost"
                     size="icon"
                     onClick={() => fileInputRef.current?.click()}
-                    className="text-gray-400 hover:text-green-400 hover:bg-white/10 rounded-xl"
+                    className="text-muted-foreground hover:text-primary hover:bg-accent rounded-xl"
                   >
                     <Paperclip className="h-5 w-5" />
                   </Button>
@@ -231,13 +235,13 @@ const Index = () => {
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyPress={handleKeyPress}
                     placeholder="Type your message..."
-                    className="flex-1 bg-transparent border-none text-white placeholder:text-gray-400 focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-transparent focus:shadow-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 px-0 text-base h-12 font-medium"
+                    className="flex-1 bg-transparent border-none text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-transparent focus:shadow-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 px-0 text-base h-12 font-medium"
                   />
                   
                   <Button 
                     onClick={handleSendMessage} 
                     disabled={!inputValue.trim()}
-                    className="bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-black rounded-xl px-6 h-12 font-semibold shadow-lg hover:shadow-green-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-primary-foreground rounded-xl px-6 h-12 font-semibold shadow-lg hover:shadow-green-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Send className="h-5 w-5" />
                   </Button>
