@@ -156,7 +156,7 @@ const Index = () => {
       <div className="relative z-10 flex flex-col min-h-screen">
         {/* Header */}
         <header className="flex justify-between items-center p-6 backdrop-blur-sm border-b border-border">
-          <img src="/lovable-uploads/8c03dabd-dd83-453a-9034-8a2363b6e7de.png" alt="Floest" className="h-8 w-auto filter invert brightness-0 saturate-100 dark:invert-0 dark:brightness-100 dark:saturate-100 dark:hue-rotate-90 transition-all duration-300" />
+          <img src="/lovable-uploads/8c03dabd-dd83-453a-9034-8a2363b6e7de.png" alt="Floest" className="h-8 w-auto brightness-0 dark:brightness-100 dark:hue-rotate-90 dark:saturate-150 transition-all duration-300" />
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-semibold bg-gradient-to-r from-green-400 to-green-300 bg-clip-text text-transparent">
               AI Assistant

@@ -61,7 +61,7 @@ export const Home = () => {
       <div className="relative z-10 max-w-6xl mx-auto">
         {/* Header */}
         <header className="flex justify-between items-center p-8 backdrop-blur-sm">
-          <img src="/lovable-uploads/8c03dabd-dd83-453a-9034-8a2363b6e7de.png" alt="Floest" className="h-10 w-auto filter invert brightness-0 saturate-100 dark:invert-0 dark:brightness-100 dark:saturate-100 dark:hue-rotate-90 transition-all duration-300" />
+          <img src="/lovable-uploads/8c03dabd-dd83-453a-9034-8a2363b6e7de.png" alt="Floest" className="h-10 w-auto brightness-0 dark:brightness-100 dark:hue-rotate-90 dark:saturate-150 transition-all duration-300" />
           
           <nav className="hidden md:flex items-center space-x-8">
             <a href="#" className="text-muted-foreground hover:text-primary transition-colors font-medium">Community</a>
