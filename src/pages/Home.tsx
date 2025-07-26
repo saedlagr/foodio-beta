@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,31 @@ export const Home = () => {
   const [prompt, setPrompt] = useState("");
   const [isAgent, setIsAgent] = useState(false);
   const navigate = useNavigate();
+  
+  // Animated title cycling
+  const titles = [
+    "Build something Automated",
+    "The Vibe Coder's Best Friend", 
+    "The Automator's Automator",
+    "Agents & Workflows Made Easy",
+    "Your AI Development Partner",
+    "Code Smarter, Not Harder"
+  ];
+  
+  const [currentTitleIndex, setCurrentTitleIndex] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setCurrentTitleIndex((prev) => (prev + 1) % titles.length);
+        setIsAnimating(false);
+      }, 500);
+    }, 3000);
+    
+    return () => clearInterval(interval);
+  }, [titles.length]);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,11 +74,27 @@ export const Home = () => {
         {/* Main Content */}
         <div className="flex flex-col items-center justify-center px-8 py-20 text-center">
           <div className="mb-16 animate-fade-in">
-            <h1 className="text-5xl md:text-7xl font-light mb-6 text-foreground leading-tight">
-              Build something
-              <br />
-              <span className="bg-gradient-to-r from-green-400 to-green-300 bg-clip-text text-transparent">
-                Automated
+            <h1 className="text-5xl md:text-7xl font-light mb-6 text-foreground leading-tight min-h-[2.5em] flex flex-col items-center justify-center">
+              <span 
+                className={`transition-all duration-500 ease-in-out ${
+                  isAnimating 
+                    ? 'opacity-0 transform -translate-y-4 scale-95' 
+                    : 'opacity-100 transform translate-y-0 scale-100'
+                }`}
+              >
+                {currentTitleIndex === 0 ? (
+                  <>
+                    Build something
+                    <br />
+                    <span className="bg-gradient-to-r from-green-400 to-green-300 bg-clip-text text-transparent">
+                      Automated
+                    </span>
+                  </>
+                ) : (
+                  <span className="bg-gradient-to-r from-green-400 to-green-300 bg-clip-text text-transparent">
+                    {titles[currentTitleIndex]}
+                  </span>
+                )}
               </span>
             </h1>
             
