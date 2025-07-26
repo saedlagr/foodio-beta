@@ -12,12 +12,12 @@ export const Home = () => {
   
   // Animated title cycling
   const titles = [
-    "Build something Automated",
-    "The Vibe Coder's Best Friend", 
-    "The Automator's Automator",
-    "Agents & Workflows Made Easy",
-    "Your AI Development Partner",
-    "Code Smarter, Not Harder"
+    { text: "Build something", highlight: "Automated" },
+    { text: "The", highlight: "Vibe Coder's", text2: "Best Friend" },
+    { text: "The", highlight: "Automator's", text2: "Automator" },
+    { text: "", highlight: "Agents & Workflows", text2: "Made Easy" },
+    { text: "Your", highlight: "AI Development", text2: "Partner" },
+    { text: "Code", highlight: "Smarter", text2: ", Not Harder" }
   ];
   
   const [currentTitleIndex, setCurrentTitleIndex] = useState(0);
@@ -84,16 +84,20 @@ export const Home = () => {
               >
                 {currentTitleIndex === 0 ? (
                   <>
-                    Build something
+                    <span className="text-foreground">{titles[currentTitleIndex].text}</span>
                     <br />
                     <span className="bg-gradient-to-r from-green-400 to-green-300 bg-clip-text text-transparent">
-                      Automated
+                      {titles[currentTitleIndex].highlight}
                     </span>
                   </>
                 ) : (
-                  <span className="bg-gradient-to-r from-green-400 to-green-300 bg-clip-text text-transparent">
-                    {titles[currentTitleIndex]}
-                  </span>
+                  <>
+                    <span className="text-foreground">{titles[currentTitleIndex].text} </span>
+                    <span className="bg-gradient-to-r from-green-400 to-green-300 bg-clip-text text-transparent">
+                      {titles[currentTitleIndex].highlight}
+                    </span>
+                    <span className="text-foreground"> {titles[currentTitleIndex].text2}</span>
+                  </>
                 )}
               </span>
             </h1>
