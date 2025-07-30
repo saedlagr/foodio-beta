@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ArrowRight, Camera, Sparkles, Upload, ImageIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
-
 export const Home = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isVideo, setIsVideo] = useState(false);
@@ -73,7 +72,6 @@ export const Home = () => {
       });
     }
   };
-
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
@@ -82,17 +80,14 @@ export const Home = () => {
       handleFileUpload(files[0]);
     }
   };
-
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(true);
   };
-
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
   };
-
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -157,31 +152,12 @@ export const Home = () => {
 
           {/* Mode Toggle */}
           <div className="flex items-center justify-center mb-8">
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-lg">
-              <div className="flex">
-                <button 
-                  onClick={() => setIsVideo(false)} 
-                  className={`px-6 py-3 rounded-xl transition-all duration-300 font-medium ${!isVideo ? 'bg-gradient-to-r from-primary to-orange-500 text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}
-                >
-                  Photo Enhancement
-                </button>
-                <button 
-                  onClick={() => setIsVideo(true)} 
-                  className={`px-6 py-3 rounded-xl transition-all duration-300 font-medium ${isVideo ? 'bg-gradient-to-r from-primary to-orange-500 text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}
-                >
-                  Video Creation
-                </button>
-              </div>
-            </div>
+            
           </div>
 
           {/* Get Started Button */}
           <div className="text-center">
-            <Button 
-              size="lg" 
-              className="px-12 py-4 text-xl font-semibold bg-gradient-to-r from-primary to-secondary hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
-              onClick={() => navigate('/signup')}
-            >
+            <Button size="lg" className="px-12 py-4 text-xl font-semibold bg-gradient-to-r from-primary to-secondary hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl" onClick={() => navigate('/signup')}>
               Get Started Today
               <ArrowRight className="ml-3 h-6 w-6" />
             </Button>
