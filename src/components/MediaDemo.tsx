@@ -7,7 +7,7 @@ export const MediaDemo = () => {
   const [activeDemo, setActiveDemo] = useState<'photo' | 'video'>('photo');
 
   return (
-    <section className="relative py-24">
+    <section className="relative pt-8 pb-24">
       <div className="max-w-7xl mx-auto px-8">
         {/* Section Header */}
         <div className="text-center mb-16">
