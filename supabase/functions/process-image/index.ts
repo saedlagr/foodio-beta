@@ -32,6 +32,7 @@ serve(async (req) => {
     const imageFile = formData.get('image') as File;
     const message = formData.get('message') as string;
     const userId = formData.get('userId') as string;
+    const imageType = formData.get('imageType') as string || 'before'; // 'before' or 'after'
 
     if (!imageFile) {
       return new Response(JSON.stringify({ error: 'No image file provided' }), {
@@ -105,10 +106,8 @@ serve(async (req) => {
 
     console.log('Image uploaded successfully:', uploadData.path);
 
-    // Convert image to base64 for OpenAI
-    const arrayBuffer = await imageFile.arrayBuffer();
-    const base64Image = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-    const mimeType = imageFile.type;
+    // Generate unique image ID for easy retrieval
+    const imageId = crypto.randomUUID();
 
     console.log('Generating embedding with OpenAI');
 
@@ -150,7 +149,9 @@ serve(async (req) => {
         metadata: {
           original_message: message,
           user_session: userId,
-          processed_at: new Date().toISOString()
+          processed_at: new Date().toISOString(),
+          image_type: imageType,
+          image_id: imageId
         }
       })
       .select()
@@ -184,16 +185,64 @@ serve(async (req) => {
       .from('food-images')
       .getPublicUrl(uploadData.path);
 
-    // Return success response
-    return new Response(JSON.stringify({
-      success: true,
-      message: `Image "${imageFile.name}" has been processed and stored successfully! I can now analyze and enhance your food photos. Your image is ready for AI processing.`,
-      image_id: imageRecord.id,
-      image_url: publicURL.publicUrl,
-      tokens_remaining: profile.tokens - 1
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    console.log('Sending image to chat agent for analysis');
+
+    // Send to n8n webhook for chat agent analysis
+    try {
+      const webhookResponse = await fetch('https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          body: {
+            message: `New ${imageType} image uploaded: "${imageFile.name}". ${message || 'Please analyze this food image.'}`,
+            image_id: imageId,
+            image_url: publicURL.publicUrl,
+            image_type: imageType,
+            user_id: user.id
+          }
+        }),
+      });
+
+      const chatResponse = await webhookResponse.text();
+      let agentMessage = "Image uploaded successfully! Ready for processing.";
+      
+      try {
+        const parsedResponse = JSON.parse(chatResponse);
+        agentMessage = parsedResponse.message || parsedResponse.output || parsedResponse.result || chatResponse || agentMessage;
+      } catch (e) {
+        agentMessage = chatResponse || agentMessage;
+      }
+
+      // Return success response with agent message
+      return new Response(JSON.stringify({
+        success: true,
+        message: agentMessage,
+        image_id: imageId,
+        db_record_id: imageRecord.id,
+        image_url: publicURL.publicUrl,
+        image_type: imageType,
+        tokens_remaining: profile.tokens - 1
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } catch (webhookError) {
+      console.error('Error sending to chat agent:', webhookError);
+      
+      // Return success response even if webhook fails
+      return new Response(JSON.stringify({
+        success: true,
+        message: `${imageType} image "${imageFile.name}" has been processed and stored successfully! Image ID: ${imageId}`,
+        image_id: imageId,
+        db_record_id: imageRecord.id,
+        image_url: publicURL.publicUrl,
+        image_type: imageType,
+        tokens_remaining: profile.tokens - 1
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
   } catch (error) {
     console.error('Error in process-image function:', error);
