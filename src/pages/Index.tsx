@@ -36,7 +36,7 @@ const Index = () => {
       
       // Send to backend immediately
       setIsLoading(true);
-      fetch('https://sgxlabs.app.n8n.cloud/webhook/9d654d89-6620-4284-9531-2fa10cbc3f30', {
+      fetch('https://sgxlabs.app.n8n.cloud/webhook-test/9d654d89-6620-4284-9531-2fa10cbc3f30', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -89,7 +89,7 @@ const Index = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('https://sgxlabs.app.n8n.cloud/webhook/9d654d89-6620-4284-9531-2fa10cbc3f30', {
+      const response = await fetch('https://sgxlabs.app.n8n.cloud/webhook-test/9d654d89-6620-4284-9531-2fa10cbc3f30', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
