@@ -169,34 +169,40 @@ export const Home = () => {
                   </p>
                 </div>
                 
-                <div className="space-y-6">
-                  <div className="flex items-start space-x-4">
-                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-1">
-                      <Sparkles className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-1">90% Cost Savings</h3>
-                      <p className="text-muted-foreground">Professional photos without the professional price tag</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start space-x-4">
-                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-1">
-                      <Camera className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-1">Instant Results</h3>
-                      <p className="text-muted-foreground">Transform photos in seconds, not hours</p>
+                <div className="grid gap-4">
+                  <div className="bg-card/30 rounded-xl p-4 border border-primary/10">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                        <Sparkles className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-foreground">90% Cost Savings</h3>
+                        <p className="text-sm text-muted-foreground">Professional photos without the professional price tag</p>
+                      </div>
                     </div>
                   </div>
                   
-                  <div className="flex items-start space-x-4">
-                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-1">
-                      <ImageIcon className="h-4 w-4 text-primary" />
+                  <div className="bg-card/30 rounded-xl p-4 border border-primary/10">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                        <Camera className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-foreground">Instant Results</h3>
+                        <p className="text-sm text-muted-foreground">Transform photos in seconds, not hours</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-1">Studio Quality</h3>
-                      <p className="text-muted-foreground">Perfect lighting, angles, and presentation every time</p>
+                  </div>
+                  
+                  <div className="bg-card/30 rounded-xl p-4 border border-primary/10">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                        <ImageIcon className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-foreground">Studio Quality</h3>
+                        <p className="text-sm text-muted-foreground">Perfect lighting, angles, and presentation every time</p>
+                      </div>
                     </div>
                   </div>
                 </div>
