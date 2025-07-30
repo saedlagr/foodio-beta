@@ -54,9 +54,9 @@ export const Home = () => {
   return (
     <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
       {/* Background Effects */}
-      <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-green-400/5"></div>
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-green-400/10 rounded-full blur-3xl animate-pulse"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-green-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5"></div>
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
       
       <div className="relative z-10 max-w-6xl mx-auto">
         {/* Header */}
@@ -86,7 +86,7 @@ export const Home = () => {
                 }`}
               >
                 <span className="text-foreground">{titles[currentTitleIndex].text} </span>
-                <span className="bg-gradient-to-r from-green-400 to-green-300 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-primary to-orange-400 bg-clip-text text-transparent">
                   {titles[currentTitleIndex].highlight}
                 </span>
                 <span className="text-foreground"> {titles[currentTitleIndex].text2}</span>
@@ -108,7 +108,7 @@ export const Home = () => {
                     onClick={() => setIsVideo(false)}
                     className={`flex items-center gap-3 px-8 py-4 rounded-xl transition-all duration-300 relative ${
                       !isVideo 
-                        ? 'bg-gradient-to-r from-green-400 to-green-500 text-primary-foreground shadow-lg' 
+                        ? 'bg-gradient-to-r from-primary to-orange-500 text-primary-foreground shadow-lg' 
                         : 'text-muted-foreground hover:text-foreground hover:bg-background/5'
                     }`}
                   >
@@ -119,7 +119,7 @@ export const Home = () => {
                     onClick={() => setIsVideo(true)}
                     className={`flex items-center gap-3 px-8 py-4 rounded-xl transition-all duration-300 relative ${
                       isVideo 
-                        ? 'bg-gradient-to-r from-green-400 to-green-500 text-primary-foreground shadow-lg' 
+                        ? 'bg-gradient-to-r from-primary to-orange-500 text-primary-foreground shadow-lg' 
                         : 'text-muted-foreground hover:text-foreground hover:bg-background/5'
                     }`}
                   >
@@ -133,14 +133,14 @@ export const Home = () => {
             {/* Input Container */}
             <form onSubmit={handleSubmit} className="mb-12">
               <div className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 to-green-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-orange-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300"></div>
                 <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-2xl">
                   <div className="flex items-center gap-4">
                     <div className="flex-1 px-6">
                       <Input value={prompt} onChange={e => setPrompt(e.target.value)} placeholder={isVideo ? "Upload a food photo to create an appetizing video..." : "Upload a food photo to make it look professional..."} className="bg-transparent border-none text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-transparent focus:shadow-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 px-0 text-lg h-16 font-medium" />
                     </div>
                     
-                    <Button type="submit" disabled={!prompt.trim()} className="bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-primary-foreground rounded-xl px-8 h-14 font-semibold shadow-lg hover:shadow-green-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <Button type="submit" disabled={!prompt.trim()} className="bg-gradient-to-r from-primary to-orange-500 hover:from-orange-500 hover:to-orange-600 text-primary-foreground rounded-xl px-8 h-14 font-semibold shadow-lg hover:shadow-primary/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
                       <ArrowRight className="h-5 w-5" />
                     </Button>
                   </div>
