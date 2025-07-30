@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ArrowRight, Camera, Sparkles, Upload, ImageIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { BeforeAfterShowcase } from "@/components/BeforeAfterShowcase";
 
 export const Home = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -140,6 +141,8 @@ export const Home = () => {
             </p>
           </div>
 
+          {/* Before/After Showcase */}
+          <BeforeAfterShowcase />
 
           {/* Mode Toggle */}
           <div className="flex items-center justify-center mb-8">
