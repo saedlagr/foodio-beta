@@ -47,11 +47,19 @@ const Index = () => {
           }
         }),
       })
-      .then(response => response.json())
-      .then(data => {
+      .then(response => response.text())
+      .then(responseText => {
+        console.log('Initial response:', responseText);
+        let data;
+        try {
+          data = responseText ? JSON.parse(responseText) : {};
+        } catch (e) {
+          data = { message: responseText };
+        }
+        
         const botMessage: Message = {
           id: (Date.now() + 1).toString(),
-          content: data.message || data.output || data.result || JSON.stringify(data) || "I'll help you build that!",
+          content: data.message || data.output || data.result || data.response || (responseText && responseText.trim() !== '' ? responseText : "Hello! I'm ready to help you with your food photos."),
           isUser: false,
           timestamp: new Date(),
         };
