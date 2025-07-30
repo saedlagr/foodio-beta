@@ -7,14 +7,8 @@ export const MediaDemo = () => {
   const [activeDemo, setActiveDemo] = useState<'photo' | 'video'>('photo');
 
   return (
-    <section className="relative py-24 bg-gradient-to-b from-background to-muted/30">
-      {/* Background Effects */}
-      <div className="absolute inset-0">
-        <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-primary/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-1/4 right-1/3 w-64 h-64 bg-orange-400/10 rounded-full blur-3xl"></div>
-      </div>
-
-      <div className="relative z-10 max-w-7xl mx-auto px-8">
+    <section className="relative py-24">
+      <div className="max-w-7xl mx-auto px-8">
         {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-light mb-6">

@@ -152,10 +152,10 @@ export const Home = () => {
           </div>
 
         </div>
+        
+        {/* Media Demo Section */}
+        <MediaDemo />
       </div>
-      
-      {/* Media Demo Section */}
-      <MediaDemo />
     </div>
   );
 };
