@@ -161,7 +161,7 @@ export const Home = () => {
               {/* Left Column - Benefits & Value Props */}
               <div className="space-y-8">
                 <div>
-                  <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                  <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">
                     Why Choose Foodio?
                   </h2>
                   <p className="text-muted-foreground text-lg">
