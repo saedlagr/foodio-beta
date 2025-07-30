@@ -3,24 +3,24 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { ArrowRight, Workflow, Bot } from "lucide-react";
+import { ArrowRight, Camera, Sparkles } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 export const Home = () => {
   const [prompt, setPrompt] = useState("");
-  const [isAgent, setIsAgent] = useState(false);
+  const [isVideo, setIsVideo] = useState(false);
   const navigate = useNavigate();
   
   // Animated title cycling
   const titles = [
-    { text: "Build something", highlight: "Automated", text2: "" },
-    { text: "The", highlight: "Vibe Coder's", text2: "Best Friend" },
-    { text: "The", highlight: "Automator's", text2: "Automator" },
-    { text: "", highlight: "Agents & Workflows", text2: "Made Easy" },
-    { text: "Your", highlight: "AI Development", text2: "Partner" },
-    { text: "Code", highlight: "Smarter", text2: ", Not Harder" },
-    { text: "", highlight: "Backend Magic", text2: "Made Simple" },
-    { text: "From", highlight: "Frontend to APIs", text2: "Instantly" },
-    { text: "", highlight: "No-Code", text2: "Meets Pro-Code" }
+    { text: "From", highlight: "Phone to Professional", text2: "in Minutes" },
+    { text: "Every", highlight: "Dish Deserves", text2: "to Look Delicious" },
+    { text: "Professional", highlight: "Food Photography", text2: "Powered by AI" },
+    { text: "Transform Any Photo", highlight: "Into Marketing", text2: "Gold" },
+    { text: "Studio-Quality Photos,", highlight: "Zero Studio", text2: "Required" },
+    { text: "Where Amateur Photos", highlight: "Become Professional", text2: "Assets" },
+    { text: "AI-Perfect Results,", highlight: "Human-Perfect", text2: "Guarantee" },
+    { text: "Stop Losing Customers to", highlight: "Better-Looking", text2: "Food Photos" },
+    { text: "Scale Your Photography", highlight: "Without Scaling", text2: "Your Budget" }
   ];
   
   const [currentTitleIndex, setCurrentTitleIndex] = useState(0);
@@ -45,7 +45,7 @@ export const Home = () => {
       navigate('/chat', { 
         state: { 
           initialPrompt: prompt.trim(),
-          mode: isAgent ? 'agent' : 'workflow'
+          mode: isVideo ? 'video' : 'photo'
         }
       });
     }
@@ -61,7 +61,7 @@ export const Home = () => {
       <div className="relative z-10 max-w-6xl mx-auto">
         {/* Header */}
         <header className="flex justify-between items-center p-8 backdrop-blur-sm">
-          <img src="/lovable-uploads/8c03dabd-dd83-453a-9034-8a2363b6e7de.png" alt="Floest" className="h-10 w-auto brightness-0 dark:brightness-100 dark:hue-rotate-90 dark:saturate-150 transition-all duration-300" />
+          <img src="/lovable-uploads/d87693c7-9197-4d4f-b427-2c13defcefff.png" alt="Foodio" className="h-10 w-auto" />
           
           <nav className="hidden md:flex items-center space-x-8">
             <a href="#" className="text-muted-foreground hover:text-primary transition-colors font-medium">Community</a>
@@ -94,7 +94,7 @@ export const Home = () => {
             </h1>
             
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Create powerful workflows and AI agents that automate your business processes.
+              Transform smartphone food photos into studio-quality images and videos using AI—90% cheaper than traditional photography with guaranteed perfect results.
             </p>
           </div>
 
@@ -105,26 +105,26 @@ export const Home = () => {
               <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-2xl">
                 <div className="flex">
                   <button
-                    onClick={() => setIsAgent(false)}
+                    onClick={() => setIsVideo(false)}
                     className={`flex items-center gap-3 px-8 py-4 rounded-xl transition-all duration-300 relative ${
-                      !isAgent 
+                      !isVideo 
                         ? 'bg-gradient-to-r from-green-400 to-green-500 text-primary-foreground shadow-lg' 
                         : 'text-muted-foreground hover:text-foreground hover:bg-background/5'
                     }`}
                   >
-                    <Workflow className="w-5 h-5" />
-                    <span className="font-semibold text-lg">Workflow</span>
+                    <Camera className="w-5 h-5" />
+                    <span className="font-semibold text-lg">Photo Enhancement</span>
                   </button>
                   <button
-                    onClick={() => setIsAgent(true)}
+                    onClick={() => setIsVideo(true)}
                     className={`flex items-center gap-3 px-8 py-4 rounded-xl transition-all duration-300 relative ${
-                      isAgent 
+                      isVideo 
                         ? 'bg-gradient-to-r from-green-400 to-green-500 text-primary-foreground shadow-lg' 
                         : 'text-muted-foreground hover:text-foreground hover:bg-background/5'
                     }`}
                   >
-                    <Bot className="w-5 h-5" />
-                    <span className="font-semibold text-lg">AI Agent</span>
+                    <Sparkles className="w-5 h-5" />
+                    <span className="font-semibold text-lg">Video Creation</span>
                   </button>
                 </div>
               </div>
@@ -137,7 +137,7 @@ export const Home = () => {
                 <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-2xl">
                   <div className="flex items-center gap-4">
                     <div className="flex-1 px-6">
-                      <Input value={prompt} onChange={e => setPrompt(e.target.value)} placeholder={isAgent ? "Describe the AI agent you want to create..." : "Describe the workflow you want to automate..."} className="bg-transparent border-none text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-transparent focus:shadow-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 px-0 text-lg h-16 font-medium" />
+                      <Input value={prompt} onChange={e => setPrompt(e.target.value)} placeholder={isVideo ? "Upload a food photo to create an appetizing video..." : "Upload a food photo to make it look professional..."} className="bg-transparent border-none text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-transparent focus:shadow-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 px-0 text-lg h-16 font-medium" />
                     </div>
                     
                     <Button type="submit" disabled={!prompt.trim()} className="bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-primary-foreground rounded-xl px-8 h-14 font-semibold shadow-lg hover:shadow-green-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
