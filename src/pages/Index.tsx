@@ -42,9 +42,9 @@ const Index = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          message: state.initialPrompt,
-          mode: state.mode,
-          timestamp: new Date().toISOString(),
+          body: {
+            message: state.initialPrompt
+          }
         }),
       })
       .then(response => response.text())
@@ -98,8 +98,9 @@ const Index = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          message: currentInput,
-          timestamp: new Date().toISOString(),
+          body: {
+            message: currentInput
+          }
         }),
       });
 
