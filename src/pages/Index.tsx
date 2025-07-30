@@ -12,6 +12,7 @@ interface Message {
   content: string;
   isUser: boolean;
   timestamp: Date;
+  image?: string;
 }
 
 const Index = () => {
@@ -154,11 +155,15 @@ const Index = () => {
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Create preview URL for the image
+      const imageUrl = URL.createObjectURL(file);
+      
       const fileMessage: Message = {
         id: Date.now().toString(),
-        content: `📎 Uploaded: ${file.name}`,
+        content: file.name,
         isUser: true,
         timestamp: new Date(),
+        image: imageUrl,
       };
       setMessages(prev => [...prev, fileMessage]);
       setIsLoading(true);
@@ -269,6 +274,15 @@ const Index = () => {
                     ? 'bg-gradient-to-r from-primary to-orange-500 text-primary-foreground' 
                     : 'bg-card/50 backdrop-blur-xl border border-border text-foreground'
                 } rounded-2xl p-4 shadow-xl`}>
+                  {message.image && (
+                    <div className="mb-3">
+                      <img 
+                        src={message.image} 
+                        alt="Uploaded image" 
+                        className="max-w-full h-auto rounded-lg max-h-48 object-cover"
+                      />
+                    </div>
+                  )}
                   <p className="text-sm leading-relaxed">{message.content}</p>
                   <span className={`text-xs mt-2 block ${
                     message.isUser ? 'text-primary-foreground/70' : 'text-muted-foreground'
