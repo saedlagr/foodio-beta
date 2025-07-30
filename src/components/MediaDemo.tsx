@@ -5,7 +5,7 @@ export const MediaDemo = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeDemo, setActiveDemo] = useState<'photo' | 'video'>('photo');
   return <section className="relative py-8">
-      <div className="max-w-5xl mx-auto px-8">
+      <div className="max-w-6xl mx-auto px-8">
         {/* Section Header */}
         <div className="text-center mb-16">
           
@@ -29,10 +29,10 @@ export const MediaDemo = () => {
         {/* Main Demo Container */}
         <div className="relative">
           {/* Photo Enhancement Demo */}
-          {activeDemo === 'photo' && <div className="grid lg:grid-cols-1 gap-6 items-center max-w-4xl mx-auto">
+          {activeDemo === 'photo' && <div className="grid lg:grid-cols-2 gap-8 items-center">
               {/* Before/After Images Container */}
               <div className="relative">
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
                   <div className="grid grid-cols-2 gap-6">
                     {/* Before */}
                     <div className="space-y-4">
@@ -70,14 +70,41 @@ export const MediaDemo = () => {
               </div>
 
               {/* Features List */}
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-1">Professional Lighting</h3>
+                      <p className="text-muted-foreground text-sm">AI-enhanced lighting that makes every dish look appetizing.</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-1">Color Perfection</h3>
+                      <p className="text-muted-foreground text-sm">Vibrant, natural colors that showcase your food's best qualities.</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-1">Studio Quality</h3>
+                      <p className="text-muted-foreground text-sm">Transform phone photos into professional marketing assets.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
               
             </div>}
 
           {/* Video Creation Demo */}
-          {activeDemo === 'video' && <div className="grid lg:grid-cols-1 gap-6 items-center max-w-4xl mx-auto">
+          {activeDemo === 'video' && <div className="grid lg:grid-cols-2 gap-8 items-center">
               {/* Video Player Container */}
               <div className="relative">
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
                   <div className="aspect-video bg-muted/20 rounded-2xl border border-muted-foreground/20 flex items-center justify-center relative overflow-hidden">
                     {/* Video Player Placeholder */}
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-orange-500/5"></div>
@@ -98,6 +125,36 @@ export const MediaDemo = () => {
                           <RotateCcw className="w-4 h-4 text-white" />
                         </button>
                       </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              
+              {/* Video Features */}
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-1">Dynamic Animations</h3>
+                      <p className="text-muted-foreground text-sm">Smooth, appetizing animations that bring your food to life.</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-1">Marketing Ready</h3>
+                      <p className="text-muted-foreground text-sm">Perfect for social media, websites, and advertising campaigns.</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-1">Multiple Formats</h3>
+                      <p className="text-muted-foreground text-sm">Export in any format optimized for your platform.</p>
                     </div>
                   </div>
                 </div>
