@@ -89,6 +89,9 @@ const Index = () => {
     setIsLoading(true);
 
     try {
+      console.log('Sending message to webhook:', currentInput);
+      console.log('Webhook URL:', 'https://sgxlabs.app.n8n.cloud/webhook-test/9d654d89-6620-4284-9531-2fa10cbc3f30');
+      
       const response = await fetch('https://sgxlabs.app.n8n.cloud/webhook-test/9d654d89-6620-4284-9531-2fa10cbc3f30', {
         method: 'POST',
         headers: {
@@ -99,6 +102,9 @@ const Index = () => {
           timestamp: new Date().toISOString(),
         }),
       });
+
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
 
       if (response.ok) {
         const data = await response.text();
