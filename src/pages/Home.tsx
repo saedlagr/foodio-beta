@@ -224,7 +224,7 @@ export const Home = () => {
                     className="w-full px-8 py-4 text-lg font-semibold bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl mb-4" 
                     onClick={() => navigate('/signup')}
                   >
-                    Start Your Free Trial
+                    Try Your First Photo for Free
                     <ArrowRight className="ml-3 h-6 w-6" />
                   </Button>
                   
