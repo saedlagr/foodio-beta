@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ArrowRight, Camera, Sparkles, Upload, ImageIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { MediaDemo } from "@/components/MediaDemo";
+
 export const Home = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isVideo, setIsVideo] = useState(false);
@@ -140,8 +140,6 @@ export const Home = () => {
             </p>
           </div>
 
-          {/* Media Demo Section */}
-          <MediaDemo />
 
           {/* Mode Toggle */}
           <div className="flex items-center justify-center mb-8">
