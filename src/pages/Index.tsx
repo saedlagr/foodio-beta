@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Send, Paperclip } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { supabase } from "@/integrations/supabase/client";
+import { useImageUpload } from "@/hooks/useImageUpload";
 
 interface Message {
   id: string;
@@ -19,6 +21,7 @@ const Index = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { uploadImage, isUploading } = useImageUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const location = useLocation();
 
@@ -166,36 +169,27 @@ const Index = () => {
         image: imageUrl,
       };
       setMessages(prev => [...prev, fileMessage]);
-      setIsLoading(true);
 
       try {
-        // Create FormData for multipart/form-data upload
-        const formData = new FormData();
-        formData.append('image', file); // The actual file
-        formData.append('message', `Process this food image: ${file.name}`);
-        formData.append('userId', 'user-session-' + Date.now()); // for conversation memory
+        // Upload using the hook
+        const result = await uploadImage(file, `Process this food image: ${file.name}`);
         
-        const response = await fetch('https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7', {
-          method: 'POST',
-          body: formData
-        });
-
-        if (response.ok) {
-          const responseText = await response.text();
-          let data;
-          try {
-            data = responseText ? JSON.parse(responseText) : {};
-          } catch (e) {
-            data = { message: responseText };
-          }
-          
+        if (result.success) {
           const botMessage: Message = {
             id: (Date.now() + 1).toString(),
-            content: data.message || data.output || data.result || data.response || "I've received your image!",
+            content: result.message,
             isUser: false,
             timestamp: new Date(),
           };
           setMessages(prev => [...prev, botMessage]);
+        } else {
+          const errorMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            content: result.error || "Sorry, I had trouble processing your image. Please try again.",
+            isUser: false,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, errorMessage]);
         }
       } catch (error) {
         console.error('Error uploading file:', error);
@@ -206,8 +200,6 @@ const Index = () => {
           timestamp: new Date(),
         };
         setMessages(prev => [...prev, errorMessage]);
-      } finally {
-        setIsLoading(false);
       }
     }
   };
@@ -282,7 +274,7 @@ const Index = () => {
               </div>
             ))}
             
-            {isLoading && (
+            {(isLoading || isUploading) && (
               <div className="flex justify-start animate-fade-in">
                 <div className="bg-card/50 backdrop-blur-xl border border-border rounded-2xl p-4 shadow-xl">
                   <div className="flex space-x-2 items-center">
@@ -291,7 +283,9 @@ const Index = () => {
                       <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                       <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                     </div>
-                    <span className="text-muted-foreground text-sm ml-2">Thinking...</span>
+                    <span className="text-muted-foreground text-sm ml-2">
+                      {isUploading ? 'Processing image...' : 'Thinking...'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -323,7 +317,7 @@ const Index = () => {
                   
                   <Button 
                     onClick={handleSendMessage} 
-                    disabled={!inputValue.trim()}
+                    disabled={!inputValue.trim() || isUploading}
                     className="bg-gradient-to-r from-primary to-orange-500 hover:from-orange-500 hover:to-orange-600 text-primary-foreground rounded-xl px-6 h-12 font-semibold shadow-lg hover:shadow-primary/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Send className="h-5 w-5" />
