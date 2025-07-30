@@ -224,13 +224,9 @@ export const Home = () => {
                     className="w-full px-8 py-4 text-lg font-semibold bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl mb-4" 
                     onClick={() => navigate('/signup')}
                   >
-                    Try Your First Photo for Free
+                    Get Started Today
                     <ArrowRight className="ml-3 h-6 w-6" />
                   </Button>
-                  
-                  <p className="text-sm text-muted-foreground">
-                    No credit card required • 7-day free trial
-                  </p>
                 </div>
               </div>
             </div>
