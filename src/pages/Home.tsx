@@ -155,15 +155,79 @@ export const Home = () => {
             
           </div>
 
-          {/* Get Started Button */}
-          <div className="text-center">
-            <Button size="lg" className="px-12 py-4 text-xl font-semibold bg-gradient-to-r from-primary to-secondary hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl" onClick={() => navigate('/signup')}>
-              Get Started Today
-              <ArrowRight className="ml-3 h-6 w-6" />
-            </Button>
-            <p className="text-muted-foreground mt-4 text-lg">
-              Transform your food photos in seconds
-            </p>
+          {/* Enhanced CTA Section */}
+          <div className="bg-gradient-to-br from-primary/5 to-secondary/5 rounded-3xl p-8 md:p-12 border border-primary/10 backdrop-blur-sm">
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              {/* Left Column - Benefits & Value Props */}
+              <div className="space-y-8">
+                <div>
+                  <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                    Why Choose Foodio?
+                  </h2>
+                  <p className="text-muted-foreground text-lg">
+                    Join thousands of restaurants saving time and money with AI-powered food photography
+                  </p>
+                </div>
+                
+                <div className="space-y-6">
+                  <div className="flex items-start space-x-4">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-1">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-1">90% Cost Savings</h3>
+                      <p className="text-muted-foreground">Professional photos without the professional price tag</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-4">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-1">
+                      <Camera className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-1">Instant Results</h3>
+                      <p className="text-muted-foreground">Transform photos in seconds, not hours</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-4">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-1">
+                      <ImageIcon className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-1">Studio Quality</h3>
+                      <p className="text-muted-foreground">Perfect lighting, angles, and presentation every time</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Right Column - CTA */}
+              <div className="text-center md:text-left space-y-6">
+                <div className="bg-card/50 rounded-2xl p-6 border border-primary/20">
+                  <h3 className="text-2xl font-bold mb-4 text-foreground">Ready to Transform Your Food Photos?</h3>
+                  <ul className="space-y-2 text-muted-foreground mb-6">
+                    <li>✓ No photography experience needed</li>
+                    <li>✓ Works with any smartphone camera</li>
+                    <li>✓ Perfect for menus, social media & ads</li>
+                    <li>✓ 100% satisfaction guarantee</li>
+                  </ul>
+                  
+                  <Button 
+                    size="lg" 
+                    className="w-full px-8 py-4 text-lg font-semibold bg-gradient-to-r from-primary to-secondary hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl mb-4" 
+                    onClick={() => navigate('/signup')}
+                  >
+                    Start Your Free Trial
+                    <ArrowRight className="ml-3 h-6 w-6" />
+                  </Button>
+                  
+                  <p className="text-sm text-muted-foreground">
+                    No credit card required • 7-day free trial
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
         </div>
