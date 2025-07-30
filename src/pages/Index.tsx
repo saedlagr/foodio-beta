@@ -47,11 +47,11 @@ const Index = () => {
           }
         }),
       })
-      .then(response => response.text())
+      .then(response => response.json())
       .then(data => {
         const botMessage: Message = {
           id: (Date.now() + 1).toString(),
-          content: data || "I'll help you build that!",
+          content: data.message || data.output || data.result || JSON.stringify(data) || "I'll help you build that!",
           isUser: false,
           timestamp: new Date(),
         };
@@ -108,10 +108,10 @@ const Index = () => {
       console.log('Response ok:', response.ok);
 
       if (response.ok) {
-        const data = await response.text();
+        const data = await response.json();
         const botMessage: Message = {
           id: (Date.now() + 1).toString(),
-          content: data || "I received your message!",
+          content: data.message || data.output || data.result || JSON.stringify(data) || "I received your message!",
           isUser: false,
           timestamp: new Date(),
         };
