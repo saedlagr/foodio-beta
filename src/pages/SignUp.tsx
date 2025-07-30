@@ -46,11 +46,11 @@ export const SignUp = () => {
             <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center">
               <Sparkles className="h-8 w-8 text-primary" />
             </div>
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Join AI Photo
+            <CardTitle className="text-3xl font-bold text-foreground">
+              Welcome to Foodio
             </CardTitle>
             <CardDescription className="text-lg">
-              Start transforming your food photos today
+              Sign in to your account or create a new one
             </CardDescription>
           </CardHeader>
 
@@ -136,7 +136,7 @@ export const SignUp = () => {
 
               <Button 
                 type="submit" 
-                className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-primary to-secondary hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
+                className="w-full h-12 text-lg font-semibold bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
               >
                 Create Account
               </Button>
@@ -149,7 +149,7 @@ export const SignUp = () => {
               </div>
             </div>
 
-            <Button variant="outline" className="w-full h-12">
+            <Button variant="outline" className="w-full h-12 border-primary/30 hover:bg-primary/10 hover:border-primary">
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path
                   fill="currentColor"
@@ -173,9 +173,9 @@ export const SignUp = () => {
 
             <div className="text-center text-sm text-muted-foreground">
               Already have an account?{" "}
-              <Link to="/signin" className="text-primary hover:underline font-medium">
-                Sign in
-              </Link>
+              <button className="text-primary hover:underline font-medium">
+                Sign in instead
+              </button>
             </div>
           </CardContent>
         </Card>
