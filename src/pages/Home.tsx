@@ -215,7 +215,7 @@ export const Home = () => {
                   
                   <Button 
                     size="lg" 
-                    className="w-full px-8 py-4 text-lg font-semibold bg-gradient-to-r from-primary to-secondary hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl mb-4" 
+                    className="w-full px-8 py-4 text-lg font-semibold bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl mb-4" 
                     onClick={() => navigate('/signup')}
                   >
                     Start Your Free Trial
