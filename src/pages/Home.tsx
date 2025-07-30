@@ -10,50 +10,70 @@ export const Home = () => {
   const [prompt, setPrompt] = useState("");
   const [isVideo, setIsVideo] = useState(false);
   const navigate = useNavigate();
-  
+
   // Animated title cycling
-  const titles = [
-    { text: "From", highlight: "Phone to Professional", text2: "in Minutes" },
-    { text: "Every", highlight: "Dish Deserves", text2: "to Look Delicious" },
-    { text: "Professional", highlight: "Food Photography", text2: "Powered by AI" },
-    { text: "Transform Any Photo", highlight: "Into Marketing", text2: "Gold" },
-    { text: "Studio-Quality Photos,", highlight: "Zero Studio", text2: "Required" },
-    { text: "Where Amateur Photos", highlight: "Become Professional", text2: "Assets" },
-    { text: "AI-Perfect Results,", highlight: "Human-Perfect", text2: "Guarantee" },
-    { text: "Stop Losing Customers to", highlight: "Better-Looking", text2: "Food Photos" },
-    { text: "Scale Your Photography", highlight: "Without Scaling", text2: "Your Budget" }
-  ];
-  
+  const titles = [{
+    text: "From",
+    highlight: "Phone to Professional",
+    text2: "in Minutes"
+  }, {
+    text: "Every",
+    highlight: "Dish Deserves",
+    text2: "to Look Delicious"
+  }, {
+    text: "Professional",
+    highlight: "Food Photography",
+    text2: "Powered by AI"
+  }, {
+    text: "Transform Any Photo",
+    highlight: "Into Marketing",
+    text2: "Gold"
+  }, {
+    text: "Studio-Quality Photos,",
+    highlight: "Zero Studio",
+    text2: "Required"
+  }, {
+    text: "Where Amateur Photos",
+    highlight: "Become Professional",
+    text2: "Assets"
+  }, {
+    text: "AI-Perfect Results,",
+    highlight: "Human-Perfect",
+    text2: "Guarantee"
+  }, {
+    text: "Stop Losing Customers to",
+    highlight: "Better-Looking",
+    text2: "Food Photos"
+  }, {
+    text: "Scale Your Photography",
+    highlight: "Without Scaling",
+    text2: "Your Budget"
+  }];
   const [currentTitleIndex, setCurrentTitleIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
-  
   useEffect(() => {
     const interval = setInterval(() => {
       setIsAnimating(true);
       setTimeout(() => {
-        setCurrentTitleIndex((prev) => (prev + 1) % titles.length);
+        setCurrentTitleIndex(prev => (prev + 1) % titles.length);
         setIsAnimating(false);
       }, 500);
     }, 4500);
-    
     return () => clearInterval(interval);
   }, [titles.length]);
-  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (prompt.trim()) {
       // Navigate to chat interface with the prompt and mode
-      navigate('/chat', { 
-        state: { 
+      navigate('/chat', {
+        state: {
           initialPrompt: prompt.trim(),
           mode: isVideo ? 'video' : 'photo'
         }
       });
     }
   };
-  
-  return (
-    <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
+  return <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5"></div>
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
@@ -80,13 +100,7 @@ export const Home = () => {
         <div className="flex flex-col items-center justify-center px-8 py-20 text-center">
           <div className="mb-16 animate-fade-in">
             <h1 className="text-5xl md:text-7xl font-light mb-6 text-foreground leading-tight min-h-[1.5em] flex flex-col items-center justify-center">
-              <span
-                className={`transition-all duration-500 ease-in-out ${
-                  isAnimating 
-                    ? 'opacity-0 transform -translate-y-4 scale-95' 
-                    : 'opacity-100 transform translate-y-0 scale-100'
-                }`}
-              >
+              <span className={`transition-all duration-500 ease-in-out ${isAnimating ? 'opacity-0 transform -translate-y-4 scale-95' : 'opacity-100 transform translate-y-0 scale-100'}`}>
                 <span className="text-foreground">{titles[currentTitleIndex].text} </span>
                 <span className="bg-gradient-to-r from-primary to-orange-400 bg-clip-text text-transparent">
                   {titles[currentTitleIndex].highlight}
@@ -107,32 +121,7 @@ export const Home = () => {
           <div className="w-full max-w-3xl mb-16">
             {/* Mode Toggle - Dual-sided Interface */}
             <div className="flex items-center justify-center mb-8">
-              <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-2xl">
-                <div className="flex">
-                  <button
-                    onClick={() => setIsVideo(false)}
-                    className={`flex items-center gap-3 px-8 py-4 rounded-xl transition-all duration-300 relative ${
-                      !isVideo 
-                        ? 'bg-gradient-to-r from-primary to-orange-500 text-primary-foreground shadow-lg' 
-                        : 'text-muted-foreground hover:text-foreground hover:bg-background/5'
-                    }`}
-                  >
-                    <Camera className="w-5 h-5" />
-                    <span className="font-semibold text-lg">Photo Enhancement</span>
-                  </button>
-                  <button
-                    onClick={() => setIsVideo(true)}
-                    className={`flex items-center gap-3 px-8 py-4 rounded-xl transition-all duration-300 relative ${
-                      isVideo 
-                        ? 'bg-gradient-to-r from-primary to-orange-500 text-primary-foreground shadow-lg' 
-                        : 'text-muted-foreground hover:text-foreground hover:bg-background/5'
-                    }`}
-                  >
-                    <Sparkles className="w-5 h-5" />
-                    <span className="font-semibold text-lg">Video Creation</span>
-                  </button>
-                </div>
-              </div>
+              
             </div>
 
             {/* Input Container */}
@@ -156,6 +145,5 @@ export const Home = () => {
 
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
