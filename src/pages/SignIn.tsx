@@ -4,16 +4,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Mail, Lock, User, Sparkles } from "lucide-react";
+import { ArrowLeft, Mail, Lock, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
-export const SignUp = () => {
+export const SignIn = () => {
   const [formData, setFormData] = useState({
-    name: "",
     email: "",
-    password: "",
-    confirmPassword: ""
+    password: ""
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -25,8 +23,8 @@ export const SignUp = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle sign up logic here
-    console.log("Sign up form submitted:", formData);
+    // Handle sign in logic here
+    console.log("Sign in form submitted:", formData);
   };
 
   return (
@@ -47,35 +45,16 @@ export const SignUp = () => {
               <Sparkles className="h-8 w-8 text-primary" />
             </div>
             <CardTitle className="text-3xl font-bold text-foreground">
-              Welcome to Foodio
+              Welcome Back
             </CardTitle>
             <CardDescription className="text-lg">
-              Sign in to your account or create a new one
+              Sign in to your Foodio account
             </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-sm font-medium">
-                    Full Name
-                  </Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="name"
-                      name="name"
-                      type="text"
-                      placeholder="Enter your full name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      className="pl-10 h-12"
-                      required
-                    />
-                  </div>
-                </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-medium">
                     Email Address
@@ -105,27 +84,8 @@ export const SignUp = () => {
                       id="password"
                       name="password"
                       type="password"
-                      placeholder="Create a password"
+                      placeholder="Enter your password"
                       value={formData.password}
-                      onChange={handleInputChange}
-                      className="pl-10 h-12"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword" className="text-sm font-medium">
-                    Confirm Password
-                  </Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      type="password"
-                      placeholder="Confirm your password"
-                      value={formData.confirmPassword}
                       onChange={handleInputChange}
                       className="pl-10 h-12"
                       required
@@ -134,11 +94,17 @@ export const SignUp = () => {
                 </div>
               </div>
 
+              <div className="flex items-center justify-between">
+                <button type="button" className="text-sm text-primary hover:underline">
+                  Forgot password?
+                </button>
+              </div>
+
               <Button 
                 type="submit" 
                 className="w-full h-12 text-lg font-semibold bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
               >
-                Create Account
+                Sign In
               </Button>
             </form>
 
@@ -172,9 +138,9 @@ export const SignUp = () => {
             </Button>
 
             <div className="text-center text-sm text-muted-foreground">
-              Already have an account?{" "}
-              <Link to="/signin" className="text-primary hover:underline font-medium">
-                Sign in
+              Don't have an account?{" "}
+              <Link to="/signup" className="text-primary hover:underline font-medium">
+                Sign up
               </Link>
             </div>
           </CardContent>

@@ -111,7 +111,7 @@ export const Home = () => {
             <a href="#" className="text-muted-foreground hover:text-primary transition-colors font-medium">Enterprise</a>
             <a href="#" className="text-muted-foreground hover:text-primary transition-colors font-medium">Pricing</a>
             <ThemeToggle />
-            <Button variant="outline" className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground backdrop-blur-sm" onClick={() => navigate('/signup')}>
+            <Button variant="outline" className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground backdrop-blur-sm" onClick={() => navigate('/signin')}>
               Sign In / Sign Up
             </Button>
           </nav>
