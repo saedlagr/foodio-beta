@@ -21,6 +21,7 @@ export type Database = {
           full_name: string | null
           id: string
           role: string | null
+          tokens: number | null
           updated_at: string
           user_id: string
         }
@@ -30,6 +31,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           role?: string | null
+          tokens?: number | null
           updated_at?: string
           user_id: string
         }
@@ -39,7 +41,35 @@ export type Database = {
           full_name?: string | null
           id?: string
           role?: string | null
+          tokens?: number | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tokens_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          type?: string
           user_id?: string
         }
         Relationships: []
@@ -49,7 +79,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      add_tokens: {
+        Args: {
+          user_email: string
+          token_amount: number
+          transaction_type?: string
+          transaction_description?: string
+        }
+        Returns: boolean
+      }
+      deduct_tokens: {
+        Args: {
+          target_user_id: string
+          token_amount: number
+          transaction_description?: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

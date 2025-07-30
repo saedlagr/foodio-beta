@@ -9,6 +9,7 @@ import { Plus, Camera, Download, Share2, MoreHorizontal, Clock, CheckCircle, Log
 import { Link, useNavigate } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
+import { useTokens } from "@/hooks/useTokens";
 import { supabase } from "@/integrations/supabase/client";
 
 // Mock data for past generations
@@ -45,12 +46,15 @@ const mockGenerations = [
 export const Dashboard = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { getUserTokens } = useTokens();
   const [generations] = useState(mockGenerations);
   const [profile, setProfile] = useState<any>(null);
+  const [tokens, setTokens] = useState<number>(0);
 
   useEffect(() => {
     if (user) {
       fetchProfile();
+      fetchTokens();
     }
   }, [user]);
 
@@ -64,6 +68,13 @@ export const Dashboard = () => {
       .single();
     
     setProfile(data);
+  };
+
+  const fetchTokens = async () => {
+    if (!user) return;
+    
+    const tokenCount = await getUserTokens(user.id);
+    setTokens(tokenCount);
   };
 
   const handleSignOut = async () => {
@@ -106,6 +117,7 @@ export const Dashboard = () => {
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">{profile?.full_name || "User"}</p>
                       <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                      <p className="text-xs leading-none text-yellow-600">{tokens} tokens</p>
                     </div>
                   </DropdownMenuItem>
                   <DropdownMenuItem>Profile</DropdownMenuItem>
@@ -144,7 +156,7 @@ export const Dashboard = () => {
           </div>
 
           {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mb-8 max-w-md">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 max-w-2xl">
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center space-x-4">
@@ -154,6 +166,22 @@ export const Dashboard = () => {
                   <div>
                     <p className="text-2xl font-bold text-foreground">24</p>
                     <p className="text-sm text-muted-foreground">Photos Enhanced</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                    <div className="h-6 w-6 rounded-full bg-yellow-500 flex items-center justify-center">
+                      <span className="text-xs font-bold text-white">T</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">{tokens}</p>
+                    <p className="text-sm text-muted-foreground">Available Tokens</p>
                   </div>
                 </div>
               </CardContent>
