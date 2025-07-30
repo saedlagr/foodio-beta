@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { ArrowRight, Camera, Sparkles } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { MediaDemo } from "@/components/MediaDemo";
 export const Home = () => {
   const [prompt, setPrompt] = useState("");
   const [isVideo, setIsVideo] = useState(false);
@@ -152,6 +153,9 @@ export const Home = () => {
 
         </div>
       </div>
+      
+      {/* Media Demo Section */}
+      <MediaDemo />
     </div>
   );
 };
