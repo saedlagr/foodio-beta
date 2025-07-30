@@ -4,16 +4,16 @@ import { Button } from "@/components/ui/button";
 
 const showcaseItems = [
   {
-    before: "/lovable-uploads/d25a559b-3657-47a0-b003-8bf3f96a6070.png",
-    after: "/lovable-uploads/ad5239ca-2238-4f89-b1e6-5ae360b1b766.png",
+    before: "/lovable-uploads/ad5239ca-2238-4f89-b1e6-5ae360b1b766.png",
+    after: "/lovable-uploads/d25a559b-3657-47a0-b003-8bf3f96a6070.png",
     title: "Ramen Enhancement",
     description: "Transform casual food photos into restaurant-quality masterpieces"
   },
   {
     before: "/lovable-uploads/500b571c-e7f4-4f75-9e3f-818ba13519a9.png", 
-    after: "/lovable-uploads/a7f85fda-bdce-465c-a1bd-e8efa2366be1.png",
-    title: "Gourmet Plating",
-    description: "Elevate your dishes with professional styling and presentation"
+    after: "/lovable-uploads/9ec6652e-eb8d-4eb6-8495-c1b80c3197e8.png",
+    title: "Loaded Fries Upgrade",
+    description: "Elevate your comfort food with professional styling"
   },
   {
     before: "/lovable-uploads/9e551e8d-7e1d-4317-99d6-72038809c886.png",
