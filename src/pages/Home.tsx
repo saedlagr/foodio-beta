@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ArrowRight, Camera, Sparkles, Upload, ImageIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { BeforeAfterShowcase } from "@/components/BeforeAfterShowcase";
 
 export const Home = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -141,8 +140,20 @@ export const Home = () => {
             </p>
           </div>
 
-          {/* Before/After Showcase */}
-          <BeforeAfterShowcase />
+          {/* Demo Video Placeholder */}
+          <div className="mb-12 max-w-4xl mx-auto">
+            <div className="bg-muted/20 rounded-2xl border-2 border-dashed border-muted-foreground/30 p-12 text-center">
+              <div className="flex flex-col items-center space-y-4">
+                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Sparkles className="h-10 w-10 text-primary" />
+                </div>
+                <h3 className="text-2xl font-semibold">Demo Video Coming Soon</h3>
+                <p className="text-muted-foreground text-lg max-w-md">
+                  Watch how our AI transforms your food photos in seconds
+                </p>
+              </div>
+            </div>
+          </div>
 
           {/* Mode Toggle */}
           <div className="flex items-center justify-center mb-8">
@@ -164,47 +175,19 @@ export const Home = () => {
             </div>
           </div>
 
-          {/* Upload Section */}
-          <div className="w-full max-w-2xl mb-12">
-            <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-orange-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300"></div>
-              <div 
-                className={`relative bg-white/5 backdrop-blur-xl border-2 border-dashed rounded-2xl p-12 shadow-2xl transition-all duration-300 cursor-pointer ${
-                  isDragOver ? 'border-primary/50 bg-primary/5' : 'border-white/20 hover:border-primary/30'
-                }`}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onClick={() => document.getElementById('file-input')?.click()}
-              >
-                <input
-                  id="file-input"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileInputChange}
-                  className="hidden"
-                />
-                
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-primary/20 to-orange-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <Upload className="w-8 h-8 text-primary" />
-                  </div>
-                  
-                  <h3 className="text-xl font-semibold mb-2 text-foreground">
-                    {isVideo ? "Upload to Create Video" : "Upload to Enhance Photo"}
-                  </h3>
-                  
-                  <p className="text-muted-foreground mb-4">
-                    Drag and drop your food photo here, or click to browse
-                  </p>
-                  
-                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                    <ImageIcon className="w-4 h-4" />
-                    <span>Supports JPG, PNG, WebP</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+          {/* Get Started Button */}
+          <div className="text-center">
+            <Button 
+              size="lg" 
+              className="px-12 py-4 text-xl font-semibold bg-gradient-to-r from-primary to-secondary hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
+              onClick={() => navigate('/signup')}
+            >
+              Get Started Today
+              <ArrowRight className="ml-3 h-6 w-6" />
+            </Button>
+            <p className="text-muted-foreground mt-4 text-lg">
+              Transform your food photos in seconds
+            </p>
           </div>
 
         </div>
