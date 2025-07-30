@@ -6,20 +6,20 @@ const showcaseItems = [
   {
     before: "/lovable-uploads/d25a559b-3657-47a0-b003-8bf3f96a6070.png",
     after: "/lovable-uploads/ad5239ca-2238-4f89-b1e6-5ae360b1b766.png",
-    title: "Ramen Enhancement",
-    description: "Transform casual food photos into restaurant-quality masterpieces"
+    beforeLabel: "iPhone pic",
+    afterLabel: "DoorDash thumbnail"
   },
   {
     before: "/lovable-uploads/9ec6652e-eb8d-4eb6-8495-c1b80c3197e8.png", 
     after: "/lovable-uploads/500b571c-e7f4-4f75-9e3f-818ba13519a9.png",
-    title: "Loaded Fries Upgrade",
-    description: "Elevate your comfort food with professional styling"
+    beforeLabel: "Your photo",
+    afterLabel: "Menu photo"
   },
   {
     before: "/lovable-uploads/9e551e8d-7e1d-4317-99d6-72038809c886.png",
     after: "/lovable-uploads/75646a35-0334-4073-96a5-61c18f77a77d.png", 
-    title: "Burger Perfection",
-    description: "Make every meal look irresistibly delicious"
+    beforeLabel: "Casual shot",
+    afterLabel: "Website hero"
   }
 ];
 
@@ -48,14 +48,15 @@ export const BeforeAfterShowcase = () => {
               <div className="bg-gray-100 px-8 py-4 border-b border-gray-200">
                 <h3 className="text-2xl font-bold text-gray-800 text-center">BEFORE</h3>
               </div>
-              <div className="flex-1 flex items-center justify-center p-8">
-                <div className="relative w-full max-w-lg">
+              <div className="flex-1 flex flex-col items-center justify-center p-8">
+                <div className="relative w-full max-w-lg mb-4">
                   <img
                     src={currentItem.before}
                     alt="Before enhancement"
                     className="w-full h-auto rounded-2xl shadow-lg transition-all duration-500 hover:shadow-2xl"
                   />
                 </div>
+                <p className="text-gray-600 font-medium text-lg">{currentItem.beforeLabel}</p>
               </div>
             </div>
 
@@ -67,8 +68,8 @@ export const BeforeAfterShowcase = () => {
                   AFTER
                 </h3>
               </div>
-              <div className="flex-1 flex items-center justify-center p-8">
-                <div className="relative w-full max-w-lg">
+              <div className="flex-1 flex flex-col items-center justify-center p-8">
+                <div className="relative w-full max-w-lg mb-4">
                   <img
                     src={currentItem.after}
                     alt="After enhancement"
@@ -76,24 +77,11 @@ export const BeforeAfterShowcase = () => {
                   />
                   <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-orange-400/20 to-orange-600/20 opacity-0 hover:opacity-100 transition-opacity duration-300 blur-lg" />
                 </div>
+                <p className="text-orange-800 font-semibold text-lg">{currentItem.afterLabel}</p>
               </div>
             </div>
-          </div>
-
-          {/* Content Footer */}
-          <div className="p-8 bg-gradient-to-r from-background to-muted/30 border-t">
-            <div className="text-center space-y-4">
-              <h3 className="text-2xl font-bold">{currentItem.title}</h3>
-              <p className="text-muted-foreground text-lg max-w-md mx-auto">{currentItem.description}</p>
-              
-              {/* Try Now Button */}
-              <Button className="mt-6 px-8 py-3 text-lg font-semibold bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl text-white">
-                Try This Enhancement
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
             </div>
           </div>
-        </div>
 
         {/* Navigation Controls */}
         <div className="flex items-center justify-between mt-8">
