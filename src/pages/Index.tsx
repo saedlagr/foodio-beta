@@ -169,35 +169,45 @@ const Index = () => {
       setIsLoading(true);
 
       try {
-        // Send file as binary data using FormData
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('message', `Image uploaded: ${file.name}`);
-        formData.append('filename', file.name);
-        formData.append('filetype', file.type);
-        
-        const response = await fetch('https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (response.ok) {
-          const responseText = await response.text();
-          let data;
-          try {
-            data = responseText ? JSON.parse(responseText) : {};
-          } catch (e) {
-            data = { message: responseText };
-          }
+        // Convert file to base64
+        const reader = new FileReader();
+        reader.onload = async () => {
+          const base64 = reader.result as string;
           
-          const botMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            content: data.message || data.output || data.result || data.response || "I've received your image!",
-            isUser: false,
-            timestamp: new Date(),
-          };
-          setMessages(prev => [...prev, botMessage]);
-        }
+          const response = await fetch('https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              body: {
+                message: `Image uploaded: ${file.name}`,
+                file: base64,
+                filename: file.name,
+                filetype: file.type
+              }
+            }),
+          });
+
+          if (response.ok) {
+            const responseText = await response.text();
+            let data;
+            try {
+              data = responseText ? JSON.parse(responseText) : {};
+            } catch (e) {
+              data = { message: responseText };
+            }
+            
+            const botMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              content: data.message || data.output || data.result || data.response || "I've received your image!",
+              isUser: false,
+              timestamp: new Date(),
+            };
+            setMessages(prev => [...prev, botMessage]);
+          }
+        };
+        reader.readAsDataURL(file);
       } catch (error) {
         console.error('Error uploading file:', error);
         const errorMessage: Message = {
