@@ -100,6 +100,9 @@ export const Home = () => {
             </p>
           </div>
 
+          {/* Media Demo Section */}
+          <MediaDemo />
+
           {/* Main Input Section */}
           <div className="w-full max-w-3xl mb-16">
             {/* Mode Toggle - Dual-sided Interface */}
@@ -152,9 +155,6 @@ export const Home = () => {
           </div>
 
         </div>
-        
-        {/* Media Demo Section */}
-        <MediaDemo />
       </div>
     </div>
   );
