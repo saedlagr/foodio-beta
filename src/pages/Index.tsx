@@ -171,14 +171,13 @@ const Index = () => {
       try {
         // Create FormData for multipart/form-data upload
         const formData = new FormData();
-        formData.append('file', file);
-        formData.append('message', `Image uploaded: ${file.name}`);
-        formData.append('filename', file.name);
-        formData.append('filetype', file.type);
+        formData.append('image', file); // The actual file
+        formData.append('message', `Process this food image: ${file.name}`);
+        formData.append('userId', 'user-session-' + Date.now()); // for conversation memory
         
         const response = await fetch('https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7', {
           method: 'POST',
-          body: formData, // No Content-Type header - browser sets it automatically with boundary
+          body: formData
         });
 
         if (response.ok) {
