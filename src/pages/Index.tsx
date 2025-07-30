@@ -108,10 +108,20 @@ const Index = () => {
       console.log('Response ok:', response.ok);
 
       if (response.ok) {
-        const data = await response.json();
+        const responseText = await response.text();
+        console.log('Raw response:', responseText);
+        
+        let data;
+        try {
+          data = responseText ? JSON.parse(responseText) : {};
+        } catch (e) {
+          console.log('Response is not JSON, using as plain text:', responseText);
+          data = { message: responseText };
+        }
+        
         const botMessage: Message = {
           id: (Date.now() + 1).toString(),
-          content: data.message || data.output || data.result || JSON.stringify(data) || "I received your message!",
+          content: data.message || data.output || data.result || responseText || "I received your message!",
           isUser: false,
           timestamp: new Date(),
         };
