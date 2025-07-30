@@ -4,8 +4,8 @@ import { Play, Pause, RotateCcw } from "lucide-react";
 export const MediaDemo = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeDemo, setActiveDemo] = useState<'photo' | 'video'>('photo');
-  return <section className="relative pt-8 pb-24">
-      <div className="max-w-7xl mx-auto px-8">
+  return <section className="relative py-8">
+      <div className="max-w-5xl mx-auto px-8">
         {/* Section Header */}
         <div className="text-center mb-16">
           
@@ -13,13 +13,13 @@ export const MediaDemo = () => {
         </div>
 
         {/* Demo Selector */}
-        <div className="flex justify-center mb-12">
+        <div className="flex justify-center mb-8">
           <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-lg">
             <div className="flex">
-              <button onClick={() => setActiveDemo('photo')} className={`px-8 py-3 rounded-xl transition-all duration-300 font-medium ${activeDemo === 'photo' ? 'bg-gradient-to-r from-primary to-orange-500 text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}>
+              <button onClick={() => setActiveDemo('photo')} className={`px-6 py-2 rounded-xl transition-all duration-300 font-medium text-sm ${activeDemo === 'photo' ? 'bg-gradient-to-r from-primary to-orange-500 text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}>
                 Photo Enhancement
               </button>
-              <button onClick={() => setActiveDemo('video')} className={`px-8 py-3 rounded-xl transition-all duration-300 font-medium ${activeDemo === 'video' ? 'bg-gradient-to-r from-primary to-orange-500 text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}>
+              <button onClick={() => setActiveDemo('video')} className={`px-6 py-2 rounded-xl transition-all duration-300 font-medium text-sm ${activeDemo === 'video' ? 'bg-gradient-to-r from-primary to-orange-500 text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}>
                 Video Creation
               </button>
             </div>
@@ -29,10 +29,10 @@ export const MediaDemo = () => {
         {/* Main Demo Container */}
         <div className="relative">
           {/* Photo Enhancement Demo */}
-          {activeDemo === 'photo' && <div className="grid lg:grid-cols-2 gap-8 items-center">
+          {activeDemo === 'photo' && <div className="grid lg:grid-cols-1 gap-6 items-center max-w-4xl mx-auto">
               {/* Before/After Images Container */}
               <div className="relative">
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
                   <div className="grid grid-cols-2 gap-6">
                     {/* Before */}
                     <div className="space-y-4">
@@ -74,10 +74,10 @@ export const MediaDemo = () => {
             </div>}
 
           {/* Video Creation Demo */}
-          {activeDemo === 'video' && <div className="grid lg:grid-cols-2 gap-8 items-center">
+          {activeDemo === 'video' && <div className="grid lg:grid-cols-1 gap-6 items-center max-w-4xl mx-auto">
               {/* Video Player Container */}
               <div className="relative">
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
                   <div className="aspect-video bg-muted/20 rounded-2xl border border-muted-foreground/20 flex items-center justify-center relative overflow-hidden">
                     {/* Video Player Placeholder */}
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-orange-500/5"></div>
@@ -103,38 +103,6 @@ export const MediaDemo = () => {
                 </div>
               </div>
 
-              {/* Video Features */}
-              <div className="space-y-8">
-                <div className="space-y-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-2 h-2 bg-primary rounded-full mt-3"></div>
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">Dynamic Animations</h3>
-                      <p className="text-muted-foreground">Smooth, appetizing animations that bring your food to life.</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start gap-4">
-                    <div className="w-2 h-2 bg-orange-500 rounded-full mt-3"></div>
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">Marketing Ready</h3>
-                      <p className="text-muted-foreground">Perfect for social media, websites, and advertising campaigns.</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start gap-4">
-                    <div className="w-2 h-2 bg-primary rounded-full mt-3"></div>
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">Multiple Formats</h3>
-                      <p className="text-muted-foreground">Export in any format optimized for your platform.</p>
-                    </div>
-                  </div>
-                </div>
-
-                <Button className="bg-gradient-to-r from-primary to-orange-500 hover:from-orange-500 hover:to-orange-600 text-primary-foreground rounded-xl px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-primary/25 transition-all duration-300">
-                  Create Video Now
-                </Button>
-              </div>
             </div>}
         </div>
 

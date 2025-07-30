@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { ArrowRight, Camera, Sparkles } from "lucide-react";
+import { ArrowRight, Camera, Sparkles, Upload, ImageIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { MediaDemo } from "@/components/MediaDemo";
 export const Home = () => {
-  const [prompt, setPrompt] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isVideo, setIsVideo] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const navigate = useNavigate();
 
   // Animated title cycling
@@ -61,16 +61,42 @@ export const Home = () => {
     }, 4500);
     return () => clearInterval(interval);
   }, [titles.length]);
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (prompt.trim()) {
-      // Navigate to chat interface with the prompt and mode
+  const handleFileUpload = (file: File) => {
+    if (file && file.type.startsWith('image/')) {
+      setSelectedFile(file);
+      // Navigate to chat interface with the file and mode
       navigate('/chat', {
         state: {
-          initialPrompt: prompt.trim(),
+          initialFile: file,
           mode: isVideo ? 'video' : 'photo'
         }
       });
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      handleFileUpload(files[0]);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileUpload(file);
     }
   };
   return <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
@@ -97,9 +123,9 @@ export const Home = () => {
         </header>
 
         {/* Main Content */}
-        <div className="flex flex-col items-center justify-center px-8 py-20 text-center">
-          <div className="mb-16 animate-fade-in">
-            <h1 className="text-5xl md:text-7xl font-light mb-6 text-foreground leading-tight min-h-[1.5em] flex flex-col items-center justify-center">
+        <div className="flex flex-col items-center justify-center px-8 py-12 text-center">
+          <div className="mb-12 animate-fade-in">
+            <h1 className="text-4xl md:text-6xl font-light mb-4 text-foreground leading-tight min-h-[1.2em] flex flex-col items-center justify-center">
               <span className={`transition-all duration-500 ease-in-out ${isAnimating ? 'opacity-0 transform -translate-y-4 scale-95' : 'opacity-100 transform translate-y-0 scale-100'}`}>
                 <span className="text-foreground">{titles[currentTitleIndex].text} </span>
                 <span className="bg-gradient-to-r from-primary to-orange-400 bg-clip-text text-transparent">
@@ -109,7 +135,7 @@ export const Home = () => {
               </span>
             </h1>
             
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               Transform smartphone food photos into studio-quality images and videos using AI—90% cheaper than traditional photography with guaranteed perfect results.
             </p>
           </div>
@@ -117,30 +143,67 @@ export const Home = () => {
           {/* Media Demo Section */}
           <MediaDemo />
 
-          {/* Main Input Section */}
-          <div className="w-full max-w-3xl mb-16">
-            {/* Mode Toggle - Dual-sided Interface */}
-            <div className="flex items-center justify-center mb-8">
-              
+          {/* Mode Toggle */}
+          <div className="flex items-center justify-center mb-8">
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-lg">
+              <div className="flex">
+                <button 
+                  onClick={() => setIsVideo(false)} 
+                  className={`px-6 py-3 rounded-xl transition-all duration-300 font-medium ${!isVideo ? 'bg-gradient-to-r from-primary to-orange-500 text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                  Photo Enhancement
+                </button>
+                <button 
+                  onClick={() => setIsVideo(true)} 
+                  className={`px-6 py-3 rounded-xl transition-all duration-300 font-medium ${isVideo ? 'bg-gradient-to-r from-primary to-orange-500 text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                  Video Creation
+                </button>
+              </div>
             </div>
+          </div>
 
-            {/* Input Container */}
-            <form onSubmit={handleSubmit} className="mb-12">
-              <div className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-orange-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300"></div>
-                <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-2xl">
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1 px-6">
-                      <Input value={prompt} onChange={e => setPrompt(e.target.value)} placeholder={isVideo ? "Upload a food photo to create an appetizing video..." : "Upload a food photo to make it look professional..."} className="bg-transparent border-none text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-transparent focus:shadow-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 px-0 text-lg h-16 font-medium" />
-                    </div>
-                    
-                    <Button type="submit" disabled={!prompt.trim()} className="bg-gradient-to-r from-primary to-orange-500 hover:from-orange-500 hover:to-orange-600 text-primary-foreground rounded-xl px-8 h-14 font-semibold shadow-lg hover:shadow-primary/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
-                      <ArrowRight className="h-5 w-5" />
-                    </Button>
+          {/* Upload Section */}
+          <div className="w-full max-w-2xl mb-12">
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-orange-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300"></div>
+              <div 
+                className={`relative bg-white/5 backdrop-blur-xl border-2 border-dashed rounded-2xl p-12 shadow-2xl transition-all duration-300 cursor-pointer ${
+                  isDragOver ? 'border-primary/50 bg-primary/5' : 'border-white/20 hover:border-primary/30'
+                }`}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onClick={() => document.getElementById('file-input')?.click()}
+              >
+                <input
+                  id="file-input"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileInputChange}
+                  className="hidden"
+                />
+                
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-gradient-to-r from-primary/20 to-orange-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <Upload className="w-8 h-8 text-primary" />
+                  </div>
+                  
+                  <h3 className="text-xl font-semibold mb-2 text-foreground">
+                    {isVideo ? "Upload to Create Video" : "Upload to Enhance Photo"}
+                  </h3>
+                  
+                  <p className="text-muted-foreground mb-4">
+                    Drag and drop your food photo here, or click to browse
+                  </p>
+                  
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                    <ImageIcon className="w-4 h-4" />
+                    <span>Supports JPG, PNG, WebP</span>
                   </div>
                 </div>
               </div>
-            </form>
+            </div>
           </div>
 
         </div>
