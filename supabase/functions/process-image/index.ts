@@ -33,6 +33,12 @@ serve(async (req) => {
     const message = formData.get('message') as string;
     const userId = formData.get('userId') as string;
     const imageType = formData.get('imageType') as string || 'before'; // 'before' or 'after'
+    
+    // Auto-detect image type if not provided
+    const detectedType = imageFile.name.toLowerCase().includes('after') || 
+                        imageFile.name.toLowerCase().includes('enhanced') || 
+                        imageFile.name.toLowerCase().includes('processed') ? 'after' : 'before';
+    const finalImageType = imageType === 'before' ? detectedType : imageType;
 
     if (!imageFile) {
       return new Response(JSON.stringify({ error: 'No image file provided' }), {
@@ -82,9 +88,9 @@ serve(async (req) => {
       });
     }
 
-    // Generate unique filename
+    // Generate unique filename with folder structure for before/after
     const fileExt = imageFile.name.split('.').pop();
-    const fileName = `${user.id}/${crypto.randomUUID()}.${fileExt}`;
+    const fileName = `${user.id}/${finalImageType}/${crypto.randomUUID()}.${fileExt}`;
 
     console.log('Uploading to storage:', fileName);
 
@@ -150,8 +156,9 @@ serve(async (req) => {
           original_message: message,
           user_session: userId,
           processed_at: new Date().toISOString(),
-          image_type: imageType,
-          image_id: imageId
+          image_type: finalImageType,
+          image_id: imageId,
+          folder: `${user.id}/${finalImageType}`
         }
       })
       .select()
@@ -196,11 +203,12 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           body: {
-            message: `New ${imageType} image uploaded: "${imageFile.name}". ${message || 'Please analyze this food image.'}`,
+            message: `New ${finalImageType} image uploaded: "${imageFile.name}". ${message || 'Please analyze this food image.'}`,
             image_id: imageId,
             image_url: publicURL.publicUrl,
-            image_type: imageType,
-            user_id: user.id
+            image_type: finalImageType,
+            user_id: user.id,
+            folder_path: `${user.id}/${finalImageType}`
           }
         }),
       });
@@ -222,7 +230,8 @@ serve(async (req) => {
         image_id: imageId,
         db_record_id: imageRecord.id,
         image_url: publicURL.publicUrl,
-        image_type: imageType,
+        image_type: finalImageType,
+        folder_path: `${user.id}/${finalImageType}`,
         tokens_remaining: profile.tokens - 1
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -233,11 +242,12 @@ serve(async (req) => {
       // Return success response even if webhook fails
       return new Response(JSON.stringify({
         success: true,
-        message: `${imageType} image "${imageFile.name}" has been processed and stored successfully! Image ID: ${imageId}`,
+        message: `${finalImageType} image "${imageFile.name}" has been processed and stored successfully! Image ID: ${imageId}`,
         image_id: imageId,
         db_record_id: imageRecord.id,
         image_url: publicURL.publicUrl,
-        image_type: imageType,
+        image_type: finalImageType,
+        folder_path: `${user.id}/${finalImageType}`,
         tokens_remaining: profile.tokens - 1
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

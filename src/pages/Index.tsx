@@ -8,7 +8,6 @@ import { Send, Paperclip } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { useImageUpload } from "@/hooks/useImageUpload";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Message {
   id: string;
@@ -22,7 +21,6 @@ const Index = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [imageType, setImageType] = useState<'before' | 'after'>('before');
   const { uploadImage, isUploading } = useImageUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const location = useLocation();
@@ -173,7 +171,12 @@ const Index = () => {
       setMessages(prev => [...prev, fileMessage]);
 
       try {
-        // Upload using the hook with image type
+        // Auto-detect image type based on filename or use 'before' as default
+        const imageType = file.name.toLowerCase().includes('after') || 
+                         file.name.toLowerCase().includes('enhanced') || 
+                         file.name.toLowerCase().includes('processed') ? 'after' : 'before';
+        
+        // Upload using the hook with auto-detected image type
         const result = await uploadImage(file, `Process this ${imageType} food image: ${file.name}`, imageType);
         
         if (result.success) {
@@ -300,26 +303,14 @@ const Index = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-orange-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300"></div>
               <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-3 shadow-2xl">
                 <div className="flex items-center space-x-3">
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="text-muted-foreground hover:text-primary hover:bg-accent rounded-xl"
-                    >
-                      <Paperclip className="h-5 w-5" />
-                    </Button>
-                    
-                    <Select value={imageType} onValueChange={(value: 'before' | 'after') => setImageType(value)}>
-                      <SelectTrigger className="w-[100px] bg-transparent border-none text-foreground h-8 text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="before">Before</SelectItem>
-                        <SelectItem value="after">After</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="text-muted-foreground hover:text-primary hover:bg-accent rounded-xl"
+                  >
+                    <Paperclip className="h-5 w-5" />
+                  </Button>
                   
                   <Input
                     value={inputValue}
