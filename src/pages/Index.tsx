@@ -38,84 +38,12 @@ const Index = () => {
       };
       setMessages([initialMessage]);
       
-      // Send to backend immediately
+      // Send to new orchestrator backend
       setIsLoading(true);
-      fetch('https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          body: {
-            message: state.initialPrompt
-          }
-        }),
-      })
-      .then(async response => {
-        const contentType = response.headers.get('content-type');
-        
-        if (contentType && contentType.includes('image/')) {
-          // Handle binary image response
-          const imageBlob = await response.blob();
-          const imageUrl = URL.createObjectURL(imageBlob);
-          
-          // Upload the processed image to our vector store as "after" image
-          try {
-            const imageFile = new File([imageBlob], `processed-${Date.now()}.png`, { type: 'image/png' });
-            const uploadResult = await uploadImage(imageFile, 'AI processed image', 'after');
-            
-            const botMessage: Message = {
-              id: (Date.now() + 1).toString(),
-              content: uploadResult.success ? "Here's your enhanced image!" : "Image processed successfully!",
-              isUser: false,
-              timestamp: new Date(),
-              image: imageUrl,
-            };
-            setMessages(prev => [...prev, botMessage]);
-          } catch (uploadError) {
-            console.error('Error uploading processed image:', uploadError);
-            const botMessage: Message = {
-              id: (Date.now() + 1).toString(),
-              content: "Here's your enhanced image!",
-              isUser: false,
-              timestamp: new Date(),
-              image: imageUrl,
-            };
-            setMessages(prev => [...prev, botMessage]);
-          }
-        } else {
-          // Handle text/JSON response
-          const responseText = await response.text();
-          console.log('Initial response:', responseText);
-          let data;
-          try {
-            data = responseText ? JSON.parse(responseText) : {};
-          } catch (e) {
-            data = { message: responseText };
-          }
-          
-          const botMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            content: data.message || data.output || data.result || data.response || (responseText && responseText.trim() !== '' ? responseText : "Hello! I'm ready to help you with your food photos."),
-            isUser: false,
-            timestamp: new Date(),
-          };
-          setMessages(prev => [...prev, botMessage]);
-        }
-      })
-      .catch(error => {
-        console.error('Error sending initial message:', error);
-        const errorMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          content: "I'm ready to help you build! What would you like to create?",
-          isUser: false,
-          timestamp: new Date(),
-        };
-        setMessages(prev => [...prev, errorMessage]);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
+      handleSendMessageToBackend(state.initialPrompt)
+        .finally(() => {
+          setIsLoading(false);
+        });
     }
   }, [location.state]);
 
@@ -134,19 +62,38 @@ const Index = () => {
     setInputValue("");
     setIsLoading(true);
 
+    await handleSendMessageToBackend(currentInput)
+      .finally(() => {
+        setIsLoading(false);
+      });
+  };
+
+  const handleSendMessageToBackend = async (message: string) => {
     try {
-      console.log('Sending message to webhook:', currentInput);
-      console.log('Webhook URL:', 'https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7');
+      console.log('Sending message to new orchestrator:', message);
       
-      const response = await fetch('https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7', {
+      // Get current user for authentication
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/orchestrator/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseUrl}/functions/v1/orchestrator/chat`,
+          'apikey': supabaseUrl
         },
         body: JSON.stringify({
-          body: {
-            message: currentInput
-          }
+          message,
+          userId: user.id,
+          context: messages.map(msg => ({
+            role: msg.isUser ? 'user' : 'assistant',
+            content: msg.content,
+            timestamp: msg.timestamp.toISOString()
+          }))
         }),
       });
 
@@ -154,103 +101,16 @@ const Index = () => {
       console.log('Response ok:', response.ok);
 
       if (response.ok) {
-        const contentType = response.headers.get('content-type');
-        console.log('Content-Type:', contentType);
+        const data = await response.json();
+        console.log('Response data:', data);
         
-        // Try to handle as binary image first, regardless of content-type
-        // because n8n might not set the correct content-type header
-        try {
-          const responseClone = response.clone();
-          const responseText = await responseClone.text();
-          
-          // Check if it's a huge binary string (likely image data)
-          if (responseText.length > 10000 && !responseText.startsWith('{') && !responseText.startsWith('[')) {
-            console.log('Detected large binary response, treating as image');
-            
-            // Convert the response to blob and create image
-            const imageBlob = await response.blob();
-            const imageUrl = URL.createObjectURL(imageBlob);
-            
-            // Upload the processed image to our vector store as "after" image
-            try {
-              const imageFile = new File([imageBlob], `processed-${Date.now()}.png`, { type: 'image/png' });
-              const uploadResult = await uploadImage(imageFile, 'AI processed image', 'after');
-              
-              const botMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                content: uploadResult.success ? "Here's your enhanced image!" : "Image processed successfully!",
-                isUser: false,
-                timestamp: new Date(),
-                image: imageUrl,
-              };
-              setMessages(prev => [...prev, botMessage]);
-            } catch (uploadError) {
-              console.error('Error uploading processed image:', uploadError);
-              const botMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                content: "Here's your enhanced image!",
-                isUser: false,
-                timestamp: new Date(),
-                image: imageUrl,
-              };
-              setMessages(prev => [...prev, botMessage]);
-            }
-            return;
-          }
-        } catch (e) {
-          console.log('Error checking for binary data:', e);
-        }
-
-        if (contentType && contentType.includes('image/')) {
-          // Handle direct binary image response with proper content-type
-          const imageBlob = await response.blob();
-          const imageUrl = URL.createObjectURL(imageBlob);
-          
-          // Upload the processed image to our vector store as "after" image
-          try {
-            const imageFile = new File([imageBlob], `processed-${Date.now()}.png`, { type: 'image/png' });
-            const uploadResult = await uploadImage(imageFile, 'AI processed image', 'after');
-            
-            const botMessage: Message = {
-              id: (Date.now() + 1).toString(),
-              content: uploadResult.success ? "Here's your enhanced image!" : "Image processed successfully!",
-              isUser: false,
-              timestamp: new Date(),
-              image: imageUrl,
-            };
-            setMessages(prev => [...prev, botMessage]);
-          } catch (uploadError) {
-            console.error('Error uploading processed image:', uploadError);
-            const botMessage: Message = {
-              id: (Date.now() + 1).toString(),
-              content: "Here's your enhanced image!",
-              isUser: false,
-              timestamp: new Date(),
-              image: imageUrl,
-            };
-            setMessages(prev => [...prev, botMessage]);
-          }
-        } else {
-          // Handle text/JSON response
-          const responseText = await response.text();
-          console.log('Raw response length:', responseText.length);
-          
-          let data;
-          try {
-            data = responseText ? JSON.parse(responseText) : {};
-          } catch (e) {
-            console.log('Response is not JSON, using as plain text');
-            data = { message: responseText };
-          }
-          
-          const botMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            content: data.message || data.output || data.result || "I received your message!",
-            isUser: false,
-            timestamp: new Date(),
-          };
-          setMessages(prev => [...prev, botMessage]);
-        }
+        const botMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: data.response || "I understand your request. How can I help with your food photography?",
+          isUser: false,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, botMessage]);
       } else {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -263,8 +123,6 @@ const Index = () => {
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
     }
   };
 

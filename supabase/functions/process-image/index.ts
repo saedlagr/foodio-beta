@@ -192,38 +192,35 @@ serve(async (req) => {
       .from('food-images')
       .getPublicUrl(uploadData.path);
 
-    console.log('Sending image to chat agent for analysis');
+    console.log('Sending image to new orchestrator for analysis');
 
-    // Send to n8n webhook for chat agent analysis
+    // Send to new orchestrator for analysis
     try {
-      const webhookResponse = await fetch('https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7', {
+      const orchestratorUrl = `${supabaseUrl}/functions/v1/orchestrator/analyze-image`;
+      const analysisResponse = await fetch(orchestratorUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseServiceKey}`,
         },
         body: JSON.stringify({
-          body: {
-            message: `New ${finalImageType} image uploaded: "${imageFile.name}". ${message || 'Please analyze this food image.'}`,
-            image_id: imageId,
-            image_url: publicURL.publicUrl,
-            image_type: finalImageType,
-            user_id: user.id,
-            folder_path: `${user.id}/${finalImageType}`
-          }
+          imageUrl: publicURL.publicUrl,
+          prompt: message || `Analyze this ${finalImageType} food image and provide improvement suggestions.`
         }),
       });
 
-      const chatResponse = await webhookResponse.text();
       let agentMessage = "Image uploaded successfully! Ready for processing.";
       
-      try {
-        const parsedResponse = JSON.parse(chatResponse);
-        agentMessage = parsedResponse.message || parsedResponse.output || parsedResponse.result || chatResponse || agentMessage;
-      } catch (e) {
-        agentMessage = chatResponse || agentMessage;
+      if (analysisResponse.ok) {
+        const analysisData = await analysisResponse.json();
+        const analysis = analysisData.analysis;
+        
+        if (analysis) {
+          agentMessage = `✅ **Image Analysis Complete!**\n\n**Food Type:** ${analysis.food_type}\n**Quality Score:** ${analysis.quality_score}/10\n\n**Analysis:** ${analysis.analysis}\n\n**Suggestions:** ${analysis.suggestions.join(' • ') || 'None identified'}\n\nReady to enhance this image? Just ask me to generate an improved version!`;
+        }
       }
 
-      // Return success response with agent message
+      // Return success response with analysis
       return new Response(JSON.stringify({
         success: true,
         message: agentMessage,
@@ -236,10 +233,10 @@ serve(async (req) => {
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
-    } catch (webhookError) {
-      console.error('Error sending to chat agent:', webhookError);
+    } catch (orchestratorError) {
+      console.error('Error sending to orchestrator:', orchestratorError);
       
-      // Return success response even if webhook fails
+      // Return success response even if orchestrator fails
       return new Response(JSON.stringify({
         success: true,
         message: `${finalImageType} image "${imageFile.name}" has been processed and stored successfully! Image ID: ${imageId}`,
