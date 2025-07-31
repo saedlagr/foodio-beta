@@ -83,7 +83,7 @@ serve(async (req) => {
 
     // Get public URLs for the images
     const imagesWithUrls = await Promise.all(
-      similarImages.map(async (image: {file_path: string, [key: string]: unknown}) => {
+      similarImages.map(async (image: any) => {
         const { data: publicURL } = supabase.storage
           .from('food-images')
           .getPublicUrl(image.file_path);

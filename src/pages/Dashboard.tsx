@@ -48,7 +48,7 @@ export const Dashboard = () => {
   const { user, signOut } = useAuth();
   const { getUserTokens } = useTokens();
   const [generations] = useState(mockGenerations);
-  const [profile, setProfile] = useState<{full_name?: string, avatar_url?: string} | null>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [tokens, setTokens] = useState<number>(0);
 
   useEffect(() => {
