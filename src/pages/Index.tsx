@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Send, Paperclip } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/client";
 import { useImageUpload } from "@/hooks/useImageUpload";
 
 interface Message {
@@ -79,12 +79,12 @@ const Index = () => {
         throw new Error('User not authenticated');
       }
 
-      const response = await fetch(`${supabaseUrl}/functions/v1/orchestrator/chat`, {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/orchestrator/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseUrl}/functions/v1/orchestrator/chat`,
-          'apikey': supabaseUrl
+          'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+          'apikey': SUPABASE_PUBLISHABLE_KEY
         },
         body: JSON.stringify({
           message,
