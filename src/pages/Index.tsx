@@ -155,9 +155,10 @@ const Index = () => {
 
       if (response.ok) {
         const contentType = response.headers.get('content-type');
+        console.log('Content-Type:', contentType);
         
         if (contentType && contentType.includes('image/')) {
-          // Handle binary image response
+          // Handle direct binary image response
           const imageBlob = await response.blob();
           const imageUrl = URL.createObjectURL(imageBlob);
           
@@ -198,13 +199,28 @@ const Index = () => {
             data = { message: responseText };
           }
           
-          const botMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            content: data.message || data.output || data.result || responseText || "I received your message!",
-            isUser: false,
-            timestamp: new Date(),
-          };
-          setMessages(prev => [...prev, botMessage]);
+          // Check if the response contains image metadata (n8n binary data format)
+          if (Array.isArray(data) && data.length > 0 && data[0].mimeType && data[0].mimeType.includes('image/')) {
+            console.log('Detected image metadata in response:', data[0]);
+            
+            // For n8n workflows, we need to get the actual image data
+            // This might require a different endpoint or approach depending on your n8n setup
+            const botMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              content: "I've processed your image, but I need to configure the webhook to return the actual image data instead of metadata. Please check your n8n workflow configuration.",
+              isUser: false,
+              timestamp: new Date(),
+            };
+            setMessages(prev => [...prev, botMessage]);
+          } else {
+            const botMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              content: data.message || data.output || data.result || responseText || "I received your message!",
+              isUser: false,
+              timestamp: new Date(),
+            };
+            setMessages(prev => [...prev, botMessage]);
+          }
         }
       } else {
         throw new Error(`HTTP error! status: ${response.status}`);
