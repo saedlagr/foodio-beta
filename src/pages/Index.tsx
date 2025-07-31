@@ -51,23 +51,57 @@ const Index = () => {
           }
         }),
       })
-      .then(response => response.text())
-      .then(responseText => {
-        console.log('Initial response:', responseText);
-        let data;
-        try {
-          data = responseText ? JSON.parse(responseText) : {};
-        } catch (e) {
-          data = { message: responseText };
-        }
+      .then(async response => {
+        const contentType = response.headers.get('content-type');
         
-        const botMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          content: data.message || data.output || data.result || data.response || (responseText && responseText.trim() !== '' ? responseText : "Hello! I'm ready to help you with your food photos."),
-          isUser: false,
-          timestamp: new Date(),
-        };
-        setMessages(prev => [...prev, botMessage]);
+        if (contentType && contentType.includes('image/')) {
+          // Handle binary image response
+          const imageBlob = await response.blob();
+          const imageUrl = URL.createObjectURL(imageBlob);
+          
+          // Upload the processed image to our vector store as "after" image
+          try {
+            const imageFile = new File([imageBlob], `processed-${Date.now()}.png`, { type: 'image/png' });
+            const uploadResult = await uploadImage(imageFile, 'AI processed image', 'after');
+            
+            const botMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              content: uploadResult.success ? "Here's your enhanced image!" : "Image processed successfully!",
+              isUser: false,
+              timestamp: new Date(),
+              image: imageUrl,
+            };
+            setMessages(prev => [...prev, botMessage]);
+          } catch (uploadError) {
+            console.error('Error uploading processed image:', uploadError);
+            const botMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              content: "Here's your enhanced image!",
+              isUser: false,
+              timestamp: new Date(),
+              image: imageUrl,
+            };
+            setMessages(prev => [...prev, botMessage]);
+          }
+        } else {
+          // Handle text/JSON response
+          const responseText = await response.text();
+          console.log('Initial response:', responseText);
+          let data;
+          try {
+            data = responseText ? JSON.parse(responseText) : {};
+          } catch (e) {
+            data = { message: responseText };
+          }
+          
+          const botMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            content: data.message || data.output || data.result || data.response || (responseText && responseText.trim() !== '' ? responseText : "Hello! I'm ready to help you with your food photos."),
+            isUser: false,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, botMessage]);
+        }
       })
       .catch(error => {
         console.error('Error sending initial message:', error);
@@ -120,24 +154,58 @@ const Index = () => {
       console.log('Response ok:', response.ok);
 
       if (response.ok) {
-        const responseText = await response.text();
-        console.log('Raw response:', responseText);
+        const contentType = response.headers.get('content-type');
         
-        let data;
-        try {
-          data = responseText ? JSON.parse(responseText) : {};
-        } catch (e) {
-          console.log('Response is not JSON, using as plain text:', responseText);
-          data = { message: responseText };
+        if (contentType && contentType.includes('image/')) {
+          // Handle binary image response
+          const imageBlob = await response.blob();
+          const imageUrl = URL.createObjectURL(imageBlob);
+          
+          // Upload the processed image to our vector store as "after" image
+          try {
+            const imageFile = new File([imageBlob], `processed-${Date.now()}.png`, { type: 'image/png' });
+            const uploadResult = await uploadImage(imageFile, 'AI processed image', 'after');
+            
+            const botMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              content: uploadResult.success ? "Here's your enhanced image!" : "Image processed successfully!",
+              isUser: false,
+              timestamp: new Date(),
+              image: imageUrl,
+            };
+            setMessages(prev => [...prev, botMessage]);
+          } catch (uploadError) {
+            console.error('Error uploading processed image:', uploadError);
+            const botMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              content: "Here's your enhanced image!",
+              isUser: false,
+              timestamp: new Date(),
+              image: imageUrl,
+            };
+            setMessages(prev => [...prev, botMessage]);
+          }
+        } else {
+          // Handle text/JSON response
+          const responseText = await response.text();
+          console.log('Raw response:', responseText);
+          
+          let data;
+          try {
+            data = responseText ? JSON.parse(responseText) : {};
+          } catch (e) {
+            console.log('Response is not JSON, using as plain text:', responseText);
+            data = { message: responseText };
+          }
+          
+          const botMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            content: data.message || data.output || data.result || responseText || "I received your message!",
+            isUser: false,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, botMessage]);
         }
-        
-        const botMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          content: data.message || data.output || data.result || responseText || "I received your message!",
-          isUser: false,
-          timestamp: new Date(),
-        };
-        setMessages(prev => [...prev, botMessage]);
       } else {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
