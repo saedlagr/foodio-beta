@@ -194,65 +194,106 @@ serve(async (req) => {
 
     console.log('Sending image to chat agent for analysis');
 
-    // Send to n8n webhook for chat agent analysis
-    try {
-      const webhookResponse = await fetch('https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          body: {
-            message: `New ${finalImageType} image uploaded: "${imageFile.name}". ${message || 'Please analyze this food image.'}`,
-            image_id: imageId,
-            image_url: publicURL.publicUrl,
-            image_type: finalImageType,
-            user_id: user.id,
-            folder_path: `${user.id}/${finalImageType}`
-          }
-        }),
-      });
+    // Get remaining tokens for response
+    const remainingTokens = profile.tokens - 1;
 
-      const chatResponse = await webhookResponse.text();
-      let agentMessage = "Image uploaded successfully! Ready for processing.";
-      
+    // Start background task for n8n processing without waiting
+    const backgroundProcessing = async () => {
       try {
-        const parsedResponse = JSON.parse(chatResponse);
-        agentMessage = parsedResponse.message || parsedResponse.output || parsedResponse.result || chatResponse || agentMessage;
-      } catch (e) {
-        agentMessage = chatResponse || agentMessage;
-      }
+        console.log('Starting background processing for image:', imageId);
+        
+        const webhookResponse = await fetch('https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            body: {
+              message: `New ${finalImageType} image uploaded: "${imageFile.name}". ${message || 'Please analyze this food image.'}`,
+              image_id: imageId,
+              image_url: publicURL.publicUrl,
+              image_type: finalImageType,
+              user_id: user.id,
+              folder_path: `${user.id}/${finalImageType}`,
+              db_record_id: imageRecord.id
+            }
+          }),
+        });
 
-      // Return success response with agent message
-      return new Response(JSON.stringify({
-        success: true,
-        message: agentMessage,
-        image_id: imageId,
-        db_record_id: imageRecord.id,
-        image_url: publicURL.publicUrl,
-        image_type: finalImageType,
-        folder_path: `${user.id}/${finalImageType}`,
-        tokens_remaining: profile.tokens - 1
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    } catch (webhookError) {
-      console.error('Error sending to chat agent:', webhookError);
-      
-      // Return success response even if webhook fails
-      return new Response(JSON.stringify({
-        success: true,
-        message: `${finalImageType} image "${imageFile.name}" has been processed and stored successfully! Image ID: ${imageId}`,
-        image_id: imageId,
-        db_record_id: imageRecord.id,
-        image_url: publicURL.publicUrl,
-        image_type: finalImageType,
-        folder_path: `${user.id}/${finalImageType}`,
-        tokens_remaining: profile.tokens - 1
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+        console.log('n8n webhook response status:', webhookResponse.status);
+        
+        if (webhookResponse.ok) {
+          const chatResponse = await webhookResponse.text();
+          console.log('n8n processing completed for image:', imageId);
+          
+          // Update the database record with the processing result if needed
+          try {
+            let processedMessage = "Image processed successfully!";
+            try {
+              const parsedResponse = JSON.parse(chatResponse);
+              processedMessage = parsedResponse.message || parsedResponse.output || parsedResponse.result || chatResponse || processedMessage;
+            } catch (e) {
+              processedMessage = chatResponse || processedMessage;
+            }
+
+            // Optional: Update the image record with processing results
+            await supabase
+              .from('images')
+              .update({
+                metadata: {
+                  ...imageRecord.metadata,
+                  processing_completed: true,
+                  processing_result: processedMessage,
+                  completed_at: new Date().toISOString()
+                }
+              })
+              .eq('id', imageRecord.id);
+              
+          } catch (updateError) {
+            console.error('Error updating image record:', updateError);
+          }
+        } else {
+          console.error('n8n webhook failed with status:', webhookResponse.status);
+        }
+      } catch (error) {
+        console.error('Background processing error for image:', imageId, error);
+        
+        // Update record to indicate processing failed
+        try {
+          await supabase
+            .from('images')
+            .update({
+              metadata: {
+                ...imageRecord.metadata,
+                processing_failed: true,
+                processing_error: error.message,
+                failed_at: new Date().toISOString()
+              }
+            })
+            .eq('id', imageRecord.id);
+        } catch (updateError) {
+          console.error('Error updating failed processing status:', updateError);
+        }
+      }
+    };
+
+    // Start the background task using EdgeRuntime.waitUntil
+    EdgeRuntime.waitUntil(backgroundProcessing());
+
+    // Return immediate response to prevent timeout
+    return new Response(JSON.stringify({
+      success: true,
+      message: "Image uploaded successfully! AI processing has started in the background. You'll see the enhanced image when processing completes (usually 60-90 seconds).",
+      image_id: imageId,
+      db_record_id: imageRecord.id,
+      image_url: publicURL.publicUrl,
+      image_type: finalImageType,
+      folder_path: `${user.id}/${finalImageType}`,
+      tokens_remaining: remainingTokens,
+      processing_status: "started"
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
 
   } catch (error) {
     console.error('Error in process-image function:', error);
