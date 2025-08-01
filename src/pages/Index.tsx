@@ -335,70 +335,10 @@ const Index = () => {
             // Start the 2.5-minute cooking animation
             setIsProcessingImage(true);
             
-            // Set timer to stop the animation and deliver the image after 2 minutes
-            setTimeout(async () => {
+            // Set timer to stop the animation after 2.5 minutes
+            setTimeout(() => {
               setIsProcessingImage(false);
-              
-              // Try to poll for the completed image result
-              try {
-                console.log('Checking for completed processing...');
-                
-                // Send a status check message to see if we get an enhanced image back
-                const checkResponse = await fetch('https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    body: {
-                      message: `Status check for processing completed image: ${file.name}`,
-                      check_status: true
-                    }
-                  }),
-                });
-
-                if (checkResponse.ok) {
-                  const responseText = await checkResponse.text();
-                  
-                  // Check if we got an enhanced image URL back
-                  const imageUrlMatch = responseText.match(/https:\/\/tempfile\.aiquickdraw\.com[^\s]*/);
-                  
-                  if (imageUrlMatch) {
-                    // We got the enhanced image! Show it
-                    const enhancedImageMessage: Message = {
-                      id: (Date.now() + 3).toString(),
-                      content: "🎉 Voilà! Your AI-enhanced masterpiece is ready to serve!",
-                      isUser: false,
-                      timestamp: new Date(),
-                      image: imageUrlMatch[0],
-                    };
-                    setMessages(prev => [...prev, enhancedImageMessage]);
-                  } else {
-                    // No image yet, show completion message
-                    const completionMessage: Message = {
-                      id: (Date.now() + 2).toString(),
-                      content: "🎉 Your enhanced image should be ready! If you don't see it yet, please try sending a message to check status.",
-                      isUser: false,
-                      timestamp: new Date(),
-                    };
-                    setMessages(prev => [...prev, completionMessage]);
-                  }
-                } else {
-                  throw new Error('Status check failed');
-                }
-              } catch (error) {
-                console.error('Error checking image status:', error);
-                
-                // Fallback completion message
-                const completionMessage: Message = {
-                  id: (Date.now() + 2).toString(),
-                  content: "🎉 Processing complete! Your enhanced image should be ready. Try sending a message to retrieve it!",
-                  isUser: false,
-                  timestamp: new Date(),
-                };
-                setMessages(prev => [...prev, completionMessage]);
-              }
-            }, 150000); // 2.5 minutes = 150,000ms
+            }, 150000); // 2.5 minutes
           }
           
           const botMessage: Message = {
