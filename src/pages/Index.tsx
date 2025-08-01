@@ -8,7 +8,7 @@ import { Send, Paperclip } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { useImageUpload } from "@/hooks/useImageUpload";
-import { CookingLoader } from "@/components/CookingLoader";
+
 import { useAuth } from "@/hooks/useAuth";
 
 interface Message {
@@ -537,8 +537,20 @@ const Index = () => {
               </div>
             )}
             
-            {/* Full-screen cooking loader for image processing */}
-            <CookingLoader isUploading={isProcessingImage} />
+            {isProcessingImage && (
+              <div className="flex justify-start animate-fade-in">
+                <div className="bg-card/50 backdrop-blur-xl border border-border rounded-2xl p-4 shadow-xl">
+                  <div className="flex space-x-2 items-center">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    </div>
+                    <span className="text-muted-foreground text-sm ml-2">Processing image...</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           
           {/* Input Section */}
