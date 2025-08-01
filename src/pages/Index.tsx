@@ -24,11 +24,51 @@ const Index = () => {
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const [currentProcessingJobId, setCurrentProcessingJobId] = useState<string | null>(null);
   const { uploadImage, isUploading } = useImageUpload();
   const { user } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const location = useLocation();
+
+  // Realtime listener for processing job updates
+  useEffect(() => {
+    if (!currentProcessingJobId) return;
+
+    const channel = supabase
+      .channel('processing-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'processing_jobs',
+          filter: `id=eq.${currentProcessingJobId}`
+        },
+        (payload) => {
+          console.log('Processing job updated:', payload);
+          if (payload.new.status === 'completed' && payload.new.result_url) {
+            setIsProcessingImage(false);
+            setCurrentProcessingJobId(null);
+            
+            // Add the completed image to chat
+            const enhancedImageMessage: Message = {
+              id: (Date.now() + 3).toString(),
+              content: "🎉 Your AI-enhanced masterpiece is ready!",
+              isUser: false,
+              timestamp: new Date(),
+              image: payload.new.result_url,
+            };
+            setMessages(prev => [...prev, enhancedImageMessage]);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentProcessingJobId]);
 
   useEffect(() => {
     // Check if we have an initial prompt from navigation state
@@ -331,14 +371,32 @@ const Index = () => {
           });
           
           if (result.message.includes("background") || result.message.includes("processing") || result.processing_status === "started") {
-            console.log('Starting cooking animation - 2.5 minutes');
-            // Start the 2.5-minute cooking animation
+            console.log('Starting processing animation - waiting for webhook response');
             setIsProcessingImage(true);
             
-            // Set timer to stop the animation after 2.5 minutes
-            setTimeout(() => {
-              setIsProcessingImage(false);
-            }, 150000); // 2.5 minutes
+            // Create a processing job record in the database
+            try {
+              const { data: processingJob, error } = await supabase
+                .from('processing_jobs')
+                .insert({
+                  user_id: user?.id,
+                  image_id: result.image_id || result.db_record_id,
+                  status: 'processing',
+                  created_at: new Date().toISOString()
+                })
+                .select()
+                .single();
+              
+              if (processingJob && !error) {
+                setCurrentProcessingJobId(processingJob.id);
+                console.log('Created processing job:', processingJob.id);
+              } else {
+                console.error('Error creating processing job:', error);
+                // Fallback - just show processing without DB tracking
+              }
+            } catch (error) {
+              console.error('Error creating processing job:', error);
+            }
           }
           
           const botMessage: Message = {
