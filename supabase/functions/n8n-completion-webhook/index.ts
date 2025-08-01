@@ -23,35 +23,16 @@ serve(async (req) => {
     const body = await req.json();
     console.log('N8N webhook payload:', JSON.stringify(body, null, 2));
 
-    // Handle the array format that n8n sends
-    let responseData;
-    if (Array.isArray(body) && body.length > 0) {
-      responseData = body[0];
-    } else if (body.data) {
-      responseData = body;
-    } else {
-      console.error('Unexpected payload format');
-      return new Response(JSON.stringify({ error: 'Invalid payload format' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Extract data from the nested structure
+    // Extract data from the actual n8n payload format
     const {
-      data: {
-        taskId,
-        response: { resultUrls = [] } = {},
-        status,
-        successFlag,
-        errorMessage
-      } = {}
-    } = responseData;
+      taskId,
+      resultUrl,
+      status,
+      successFlag,
+      errorMessage
+    } = body;
 
-    // Extract the original request data that should be in the n8n workflow context
-    // For now, we'll need to find the db_record_id from the taskId or another method
-    // This will need to be passed through the n8n workflow
-    const processed_image_url = resultUrls[0];
+    const processed_image_url = resultUrl;
     const success = successFlag === 1 && status === "SUCCESS";
 
     console.log(`N8N processing result - TaskId: ${taskId}, Success: ${success}, URL: ${processed_image_url}`);
@@ -98,7 +79,7 @@ serve(async (req) => {
             completed_at: new Date().toISOString(),
             task_id: taskId,
             n8n_success: true,
-            n8n_response: responseData
+            n8n_response: body
           }
         })
         .eq('id', db_record_id);
@@ -127,7 +108,7 @@ serve(async (req) => {
             failed_at: new Date().toISOString(),
             task_id: taskId,
             n8n_success: false,
-            n8n_response: responseData
+            n8n_response: body
           }
         })
         .eq('id', db_record_id);
