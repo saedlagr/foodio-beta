@@ -18,7 +18,7 @@ interface ProcessedImage {
 }
 
 export const Generator = () => {
-  const [webhookUrl, setWebhookUrl] = useState("");
+  const webhookUrl = "https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7";
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processedImages, setProcessedImages] = useState<ProcessedImage[]>([]);
@@ -49,15 +49,6 @@ export const Generator = () => {
       toast({
         title: "No images selected",
         description: "Please select at least one image to process",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!webhookUrl.trim()) {
-      toast({
-        title: "No webhook URL",
-        description: "Please enter your n8n webhook URL",
         variant: "destructive",
       });
       return;
@@ -184,17 +175,6 @@ export const Generator = () => {
               <CardContent className="p-6">
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="webhook">n8n Webhook URL</Label>
-                    <Input
-                      id="webhook"
-                      placeholder="https://your-n8n-instance.com/webhook/..."
-                      value={webhookUrl}
-                      onChange={(e) => setWebhookUrl(e.target.value)}
-                      className="mt-2"
-                    />
-                  </div>
-                  
-                  <div>
                     <Label>Upload Images</Label>
                     <div 
                       className="mt-2 border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-muted-foreground/50 transition-colors cursor-pointer"
@@ -258,7 +238,7 @@ export const Generator = () => {
                       </>
                     ) : (
                       <>
-                        Send to Webhook
+                        Transform Images
                         <Zap className="w-5 h-5 ml-2" />
                       </>
                     )}
@@ -331,15 +311,15 @@ export const Generator = () => {
                 <div className="space-y-3 text-sm text-muted-foreground">
                   <div className="flex gap-3">
                     <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-bold">1</div>
-                    <p>Enter your n8n webhook URL</p>
-                  </div>
-                  <div className="flex gap-3">
-                    <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-bold">2</div>
                     <p>Upload one or more images</p>
                   </div>
                   <div className="flex gap-3">
+                    <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-bold">2</div>
+                    <p>Click transform to process your images</p>
+                  </div>
+                  <div className="flex gap-3">
                     <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-bold">3</div>
-                    <p>Images are sent to your webhook for processing</p>
+                    <p>Get your transformed images back</p>
                   </div>
                 </div>
               </CardContent>
