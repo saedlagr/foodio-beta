@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Home } from "./pages/Home";
 import { Dashboard } from "@/pages/Dashboard";
+import { Generator } from "@/pages/Generator";
 import { SignIn } from "@/pages/SignIn";
 import { SignUp } from "@/pages/SignUp";
 import NotFound from "./pages/NotFound";
@@ -27,6 +28,11 @@ const App = () => (
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/generator" element={
+                <ProtectedRoute>
+                  <Generator />
                 </ProtectedRoute>
               } />
               <Route path="/signin" element={
