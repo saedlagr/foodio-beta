@@ -1,15 +1,11 @@
 
 import { useState, useRef, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Send, Paperclip } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { supabase } from "@/integrations/supabase/client";
-import { useImageUpload } from "@/hooks/useImageUpload";
-import { CookingLoader } from "@/components/CookingLoader";
-import { useAuth } from "@/hooks/useAuth";
 
 interface Message {
   id: string;
@@ -23,10 +19,6 @@ const Index = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isProcessingImage, setIsProcessingImage] = useState(false);
-  const { uploadImage, isUploading } = useImageUpload();
-  const { user } = useAuth();
-  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const location = useLocation();
 
@@ -56,63 +48,23 @@ const Index = () => {
           }
         }),
       })
-      .then(async response => {
-        const contentType = response.headers.get('content-type');
-        
-        if (contentType && contentType.includes('image/')) {
-          // Handle binary image response
-          const imageBlob = await response.blob();
-          const imageUrl = URL.createObjectURL(imageBlob);
-          
-          // Upload the processed image to our vector store as "after" image
-          try {
-            const imageFile = new File([imageBlob], `processed-${Date.now()}.png`, { type: 'image/png' });
-            const uploadResult = await uploadImage(imageFile, 'AI processed image', 'after');
-            
-            const botMessage: Message = {
-              id: (Date.now() + 1).toString(),
-              content: uploadResult.success ? "Here's your enhanced image!" : "Image processed successfully!",
-              isUser: false,
-              timestamp: new Date(),
-              image: imageUrl,
-            };
-            setMessages(prev => [...prev, botMessage]);
-          } catch (uploadError) {
-            console.error('Error uploading processed image:', uploadError);
-            const botMessage: Message = {
-              id: (Date.now() + 1).toString(),
-              content: "Here's your enhanced image!",
-              isUser: false,
-              timestamp: new Date(),
-              image: imageUrl,
-            };
-            setMessages(prev => [...prev, botMessage]);
-          }
-        } else {
-          // Handle text/JSON response
-          const responseText = await response.text();
-          console.log('Initial response:', responseText);
-          let data;
-          try {
-            data = responseText ? JSON.parse(responseText) : {};
-          } catch (e) {
-            data = { message: responseText };
-          }
-          
-          const messageContent = data.message || data.output || data.result || data.response || (responseText && responseText.trim() !== '' ? responseText : "Hello! I'm ready to help you with your food photos.");
-          
-          // Check if the message contains an image URL from tempfile.aiquickdraw.com
-          const imageUrlMatch = messageContent.match(/https:\/\/tempfile\.aiquickdraw\.com[^\s]*/);
-          
-          const botMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            content: imageUrlMatch ? "Here's your enhanced image!" : messageContent,
-            isUser: false,
-            timestamp: new Date(),
-            image: imageUrlMatch ? imageUrlMatch[0] : undefined,
-          };
-          setMessages(prev => [...prev, botMessage]);
+      .then(response => response.text())
+      .then(responseText => {
+        console.log('Initial response:', responseText);
+        let data;
+        try {
+          data = responseText ? JSON.parse(responseText) : {};
+        } catch (e) {
+          data = { message: responseText };
         }
+        
+        const botMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: data.message || data.output || data.result || data.response || (responseText && responseText.trim() !== '' ? responseText : "Hello! I'm ready to help you with your food photos."),
+          isUser: false,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, botMessage]);
       })
       .catch(error => {
         console.error('Error sending initial message:', error);
@@ -165,121 +117,24 @@ const Index = () => {
       console.log('Response ok:', response.ok);
 
       if (response.ok) {
-        const contentType = response.headers.get('content-type');
-        console.log('Content-Type:', contentType);
+        const responseText = await response.text();
+        console.log('Raw response:', responseText);
         
-        // Try to handle as binary image first, regardless of content-type
-        // because n8n might not set the correct content-type header
+        let data;
         try {
-          const responseClone = response.clone();
-          const responseText = await responseClone.text();
-          
-          // Check if it's a huge binary string (likely image data)
-          if (responseText.length > 10000 && !responseText.startsWith('{') && !responseText.startsWith('[')) {
-            console.log('Detected large binary response, treating as image');
-            
-            // Convert the response to blob and create image
-            const imageBlob = await response.blob();
-            const imageUrl = URL.createObjectURL(imageBlob);
-            
-            // Upload the processed image to our vector store as "after" image
-            try {
-              const imageFile = new File([imageBlob], `processed-${Date.now()}.png`, { type: 'image/png' });
-              const uploadResult = await uploadImage(imageFile, 'AI processed image', 'after');
-              
-              const botMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                content: uploadResult.success ? "Here's your enhanced image!" : "Image processed successfully!",
-                isUser: false,
-                timestamp: new Date(),
-                image: imageUrl,
-              };
-              setMessages(prev => [...prev, botMessage]);
-            } catch (uploadError) {
-              console.error('Error uploading processed image:', uploadError);
-              const botMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                content: "Here's your enhanced image!",
-                isUser: false,
-                timestamp: new Date(),
-                image: imageUrl,
-              };
-              setMessages(prev => [...prev, botMessage]);
-            }
-            return;
-          }
+          data = responseText ? JSON.parse(responseText) : {};
         } catch (e) {
-          console.log('Error checking for binary data:', e);
+          console.log('Response is not JSON, using as plain text:', responseText);
+          data = { message: responseText };
         }
-
-        if (contentType && contentType.includes('image/')) {
-          // Handle direct binary image response with proper content-type
-          const imageBlob = await response.blob();
-          const imageUrl = URL.createObjectURL(imageBlob);
-          
-          // Upload the processed image to our vector store as "after" image
-          try {
-            const imageFile = new File([imageBlob], `processed-${Date.now()}.png`, { type: 'image/png' });
-            const uploadResult = await uploadImage(imageFile, 'AI processed image', 'after');
-            
-            const botMessage: Message = {
-              id: (Date.now() + 1).toString(),
-              content: uploadResult.success ? "Here's your enhanced image!" : "Image processed successfully!",
-              isUser: false,
-              timestamp: new Date(),
-              image: imageUrl,
-            };
-            setMessages(prev => [...prev, botMessage]);
-          } catch (uploadError) {
-            console.error('Error uploading processed image:', uploadError);
-            const botMessage: Message = {
-              id: (Date.now() + 1).toString(),
-              content: "Here's your enhanced image!",
-              isUser: false,
-              timestamp: new Date(),
-              image: imageUrl,
-            };
-            setMessages(prev => [...prev, botMessage]);
-          }
-        } else {
-          // Handle text/JSON response
-          const responseText = await response.text();
-          console.log('Raw response length:', responseText.length);
-          
-          // Check if this is a Cloudflare error page
-          if (responseText.includes('<!DOCTYPE html>') && responseText.includes('timeout occurred')) {
-            const botMessage: Message = {
-              id: (Date.now() + 1).toString(),
-              content: "The image processing service is currently experiencing high load. Please try again in a few moments. 🔄",
-              isUser: false,
-              timestamp: new Date(),
-            };
-            setMessages(prev => [...prev, botMessage]);
-            return;
-          }
-          
-          let data;
-          try {
-            data = responseText ? JSON.parse(responseText) : {};
-          } catch (e) {
-            console.log('Response is not JSON, using as plain text');
-            data = { message: responseText };
-          }
-          
-          const messageContent = data.message || data.output || data.result || responseText || "I received your message!";
-          
-          // Check if the message contains an image URL from tempfile.aiquickdraw.com
-          const imageUrlMatch = messageContent.match(/https:\/\/tempfile\.aiquickdraw\.com[^\s]*/);
-          
-          const botMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            content: imageUrlMatch ? "Here's your enhanced image!" : messageContent,
-            isUser: false,
-            timestamp: new Date(),
-            image: imageUrlMatch ? imageUrlMatch[0] : undefined,
-          };
-          setMessages(prev => [...prev, botMessage]);
-        }
+        
+        const botMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: data.message || data.output || data.result || responseText || "I received your message!",
+          isUser: false,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, botMessage]);
       } else {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -311,103 +166,36 @@ const Index = () => {
         image: imageUrl,
       };
       setMessages(prev => [...prev, fileMessage]);
+      setIsLoading(true);
 
       try {
-        // Auto-detect image type based on filename or use 'before' as default
-        const imageType = file.name.toLowerCase().includes('after') || 
-                         file.name.toLowerCase().includes('enhanced') || 
-                         file.name.toLowerCase().includes('processed') ? 'after' : 'before';
+        // Create FormData for multipart/form-data upload
+        const formData = new FormData();
+        formData.append('image', file); // The actual file
+        formData.append('message', `Process this food image: ${file.name}`);
+        formData.append('userId', 'user-session-' + Date.now()); // for conversation memory
         
-        // Upload using the hook with auto-detected image type
-        const result = await uploadImage(file, `Process this ${imageType} food image: ${file.name}`, imageType);
-        
-        if (result.success) {
-          // Check if this indicates background processing has started
-          if (result.message.includes("background") || result.message.includes("processing")) {
-            // Start the 2-minute cooking animation
-            setIsProcessingImage(true);
-            
-            // Set timer to stop the animation and deliver the image after 2 minutes
-            setTimeout(async () => {
-              setIsProcessingImage(false);
-              
-              // Try to poll for the completed image result
-              try {
-                console.log('Checking for completed processing...');
-                
-                // Send a status check message to see if we get an enhanced image back
-                const checkResponse = await fetch('https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    body: {
-                      message: `Status check for processing completed image: ${file.name}`,
-                      check_status: true
-                    }
-                  }),
-                });
+        const response = await fetch('https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7', {
+          method: 'POST',
+          body: formData
+        });
 
-                if (checkResponse.ok) {
-                  const responseText = await checkResponse.text();
-                  
-                  // Check if we got an enhanced image URL back
-                  const imageUrlMatch = responseText.match(/https:\/\/tempfile\.aiquickdraw\.com[^\s]*/);
-                  
-                  if (imageUrlMatch) {
-                    // We got the enhanced image! Show it
-                    const enhancedImageMessage: Message = {
-                      id: (Date.now() + 3).toString(),
-                      content: "🎉 Voilà! Your AI-enhanced masterpiece is ready to serve!",
-                      isUser: false,
-                      timestamp: new Date(),
-                      image: imageUrlMatch[0],
-                    };
-                    setMessages(prev => [...prev, enhancedImageMessage]);
-                  } else {
-                    // No image yet, show completion message
-                    const completionMessage: Message = {
-                      id: (Date.now() + 2).toString(),
-                      content: "🎉 Your enhanced image should be ready! If you don't see it yet, please try sending a message to check status.",
-                      isUser: false,
-                      timestamp: new Date(),
-                    };
-                    setMessages(prev => [...prev, completionMessage]);
-                  }
-                } else {
-                  throw new Error('Status check failed');
-                }
-              } catch (error) {
-                console.error('Error checking image status:', error);
-                
-                // Fallback completion message
-                const completionMessage: Message = {
-                  id: (Date.now() + 2).toString(),
-                  content: "🎉 Processing complete! Your enhanced image should be ready. Try sending a message to retrieve it!",
-                  isUser: false,
-                  timestamp: new Date(),
-                };
-                setMessages(prev => [...prev, completionMessage]);
-              }
-            }, 150000); // 2.5 minutes = 150,000ms
+        if (response.ok) {
+          const responseText = await response.text();
+          let data;
+          try {
+            data = responseText ? JSON.parse(responseText) : {};
+          } catch (e) {
+            data = { message: responseText };
           }
           
           const botMessage: Message = {
             id: (Date.now() + 1).toString(),
-            content: result.message,
+            content: data.message || data.output || data.result || data.response || "I've received your image!",
             isUser: false,
             timestamp: new Date(),
           };
           setMessages(prev => [...prev, botMessage]);
-        } else {
-          const errorMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            content: result.error || "Sorry, I had trouble processing your image. Please try again.",
-            isUser: false,
-            timestamp: new Date(),
-          };
-          setMessages(prev => [...prev, errorMessage]);
         }
       } catch (error) {
         console.error('Error uploading file:', error);
@@ -418,6 +206,8 @@ const Index = () => {
           timestamp: new Date(),
         };
         setMessages(prev => [...prev, errorMessage]);
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -442,12 +232,9 @@ const Index = () => {
           <img src="/lovable-uploads/fae6ccf8-cbb0-42c9-bb05-8b5112d87509.png" alt="Foodio" className="h-8 w-auto dark:hidden" />
           <img src="/lovable-uploads/19a613a5-687b-443f-9a7e-df9d77fbddf2.png" alt="Foodio" className="h-8 w-auto hidden dark:block" />
           <div className="flex items-center gap-4">
-            <button 
-              onClick={() => navigate('/dashboard')}
-              className="text-xl font-semibold bg-gradient-to-r from-primary to-orange-400 bg-clip-text text-transparent hover:from-orange-400 hover:to-primary transition-all duration-300 cursor-pointer"
-            >
-              {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Dashboard'}
-            </button>
+            <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-orange-400 bg-clip-text text-transparent">
+              Foodio AI
+            </h1>
             <ThemeToggle />
           </div>
         </header>
@@ -495,7 +282,7 @@ const Index = () => {
               </div>
             ))}
             
-            {(isLoading || isUploading) && (
+            {isLoading && (
               <div className="flex justify-start animate-fade-in">
                 <div className="bg-card/50 backdrop-blur-xl border border-border rounded-2xl p-4 shadow-xl">
                   <div className="flex space-x-2 items-center">
@@ -504,16 +291,11 @@ const Index = () => {
                       <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                       <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                     </div>
-                    <span className="text-muted-foreground text-sm ml-2">
-                      {isUploading ? 'Processing image...' : 'Thinking...'}
-                    </span>
+                    <span className="text-muted-foreground text-sm ml-2">Thinking...</span>
                   </div>
                 </div>
               </div>
             )}
-            
-            {/* Full-screen cooking loader for image processing */}
-            <CookingLoader isUploading={isProcessingImage} />
           </div>
           
           {/* Input Section */}
@@ -541,7 +323,7 @@ const Index = () => {
                   
                   <Button 
                     onClick={handleSendMessage} 
-                    disabled={!inputValue.trim() || isUploading}
+                    disabled={!inputValue.trim()}
                     className="bg-gradient-to-r from-primary to-orange-500 hover:from-orange-500 hover:to-orange-600 text-primary-foreground rounded-xl px-6 h-12 font-semibold shadow-lg hover:shadow-primary/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Send className="h-5 w-5" />
