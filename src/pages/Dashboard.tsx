@@ -74,10 +74,10 @@ export const Dashboard = () => {
       <header className="border-b border-white/10 bg-black/20 backdrop-blur-sm sticky top-0 z-50 relative">
         <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <img src="/lovable-uploads/fae6ccf8-cbb0-42c9-bb05-8b5112d87509.png" alt="Foodio" className="h-8 w-auto dark:hidden" />
-              <img src="/lovable-uploads/19a613a5-687b-443f-9a7e-df9d77fbddf2.png" alt="Foodio" className="h-8 w-auto hidden dark:block" />
-              <Separator orientation="vertical" className="h-8" />
+          <div className="flex items-center space-x-4">
+            <img src="/lovable-uploads/fae6ccf8-cbb0-42c9-bb05-8b5112d87509.png" alt="Foodio" className="h-8 w-auto dark:hidden" />
+            <img src="/lovable-uploads/19a613a5-687b-443f-9a7e-df9d77fbddf2.png" alt="Foodio" className="h-8 w-auto hidden dark:block" />
+            <Separator orientation="vertical" className="h-8" />
               <nav className="hidden md:flex items-center space-x-6">
                 <Link to="/dashboard" className="text-foreground font-medium">Portfolio</Link>
                 <Link to="#" className="text-muted-foreground hover:text-foreground transition-colors">Gallery</Link>

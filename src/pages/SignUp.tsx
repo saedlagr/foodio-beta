@@ -84,11 +84,17 @@ export const SignUp = () => {
       <AnimatedBackground />
       {/* Header */}
       <div className="absolute top-6 left-6 right-6 flex justify-between items-center z-20">
-        <Link to="/" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
-          <ArrowLeft className="h-5 w-5" />
-          <span className="font-medium">Back to Home</span>
-        </Link>
-        <ThemeToggle />
+        <div className="flex items-center space-x-4">
+          <img src="/lovable-uploads/fae6ccf8-cbb0-42c9-bb05-8b5112d87509.png" alt="Foodio" className="h-8 w-auto dark:hidden" />
+          <img src="/lovable-uploads/19a613a5-687b-443f-9a7e-df9d77fbddf2.png" alt="Foodio" className="h-8 w-auto hidden dark:block" />
+        </div>
+        <div className="flex items-center space-x-4">
+          <ThemeToggle />
+          <Link to="/" className="flex items-center space-x-2 text-white hover:text-[#00CFCF] transition-colors">
+            <ArrowLeft className="h-5 w-5" />
+            <span className="font-medium">Back to Home</span>
+          </Link>
+        </div>
       </div>
 
       <div className="w-full max-w-md relative z-10">

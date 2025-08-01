@@ -13,14 +13,26 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen text-white relative overflow-hidden flex items-center justify-center">
+    <div className="min-h-screen text-white relative overflow-hidden">
       <AnimatedBackground />
-      <div className="text-center relative z-10">
-        <h1 className="text-4xl font-bold mb-4">404</h1>
-        <p className="text-xl text-gray-300 mb-4">Oops! Page not found</p>
-        <a href="/" className="text-[#00CFCF] hover:text-[#00B8B8] underline">
-          Return to Home
+      
+      {/* Header */}
+      <header className="absolute top-6 left-6 right-6 flex justify-between items-center z-20">
+        <div className="flex items-center space-x-4">
+          <img src="/lovable-uploads/fae6ccf8-cbb0-42c9-bb05-8b5112d87509.png" alt="Foodio" className="h-8 w-auto dark:hidden" />
+          <img src="/lovable-uploads/19a613a5-687b-443f-9a7e-df9d77fbddf2.png" alt="Foodio" className="h-8 w-auto hidden dark:block" />
+        </div>
+        <a href="/" className="text-[#00CFCF] hover:text-[#00B8B8] underline font-medium">
+          Back to Home
         </a>
+      </header>
+      
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center relative z-10">
+          <h1 className="text-4xl font-bold mb-4">404</h1>
+          <p className="text-xl text-gray-300 mb-4">Oops! Page not found</p>
+          <p className="text-muted-foreground">The page you're looking for doesn't exist.</p>
+        </div>
       </div>
     </div>
   );
