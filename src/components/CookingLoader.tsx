@@ -28,56 +28,56 @@ const cookingPuns = [
   "Perfecting the presentation..."
 ];
 
-// 60-second cooking process with specific timings
+// 2-minute (120 seconds) cooking process with specific timings
 const cookingSteps = [
   { 
     icon: ChefHat, 
     title: "Prep Work", 
     pun: "Chopping pixels to perfection...", 
-    duration: 5000, // 5 seconds
+    duration: 15000, // 15 seconds
     description: "Preparing ingredients"
   },
   { 
     icon: Flame, 
     title: "Heating Up", 
     pun: "Firing up the AI ovens...", 
-    duration: 5000, // 5 seconds
+    duration: 15000, // 15 seconds
     description: "Getting everything ready"
   },
   { 
     icon: Utensils, 
     title: "Cooking", 
     pun: "Searing in those delicious details...", 
-    duration: 20000, // 20 seconds - main cooking phase
+    duration: 40000, // 40 seconds - main cooking phase
     description: "The main cooking process"
   },
   { 
     icon: Sparkles, 
     title: "Seasoning", 
     pun: "Sprinkling AI magic seasoning...", 
-    duration: 15000, // 15 seconds
+    duration: 25000, // 25 seconds
     description: "Adding flavor enhancements"
   },
   { 
     icon: Clock, 
     title: "Simmering", 
     pun: "Slow cooking for perfection...", 
-    duration: 10000, // 10 seconds
+    duration: 15000, // 15 seconds
     description: "Letting flavors blend"
   },
   { 
     icon: Eye, 
     title: "Plating", 
     pun: "Arranging your visual masterpiece...", 
-    duration: 3000, // 3 seconds
+    duration: 7000, // 7 seconds
     description: "Final presentation"
   },
   { 
     icon: CheckCircle2, 
     title: "Ready!", 
-    pun: "Bon appétit! Your image is ready...", 
-    duration: 2000, // 2 seconds
-    description: "Perfect timing!"
+    pun: "Bon appétit! Your masterpiece is served...", 
+    duration: 3000, // 3 seconds
+    description: "Perfect timing guaranteed!"
   }
 ];
 
