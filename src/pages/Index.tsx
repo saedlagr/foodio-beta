@@ -22,6 +22,7 @@ const Index = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const { uploadImage, isUploading } = useImageUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const location = useLocation();
@@ -314,17 +315,75 @@ const Index = () => {
                          file.name.toLowerCase().includes('enhanced') || 
                          file.name.toLowerCase().includes('processed') ? 'after' : 'before';
         
+        // Start processing state
+        setIsProcessing(true);
+        
         // Upload using the hook with auto-detected image type
         const result = await uploadImage(file, `Process this ${imageType} food image: ${file.name}`, imageType);
         
-        if (result.success) {
-          const botMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            content: result.message,
-            isUser: false,
-            timestamp: new Date(),
-          };
-          setMessages(prev => [...prev, botMessage]);
+        if (result.success && result.db_record_id) {
+          // Start listening for processing completion via realtime
+          const channel = supabase
+            .channel('processing-updates')
+            .on(
+              'postgres_changes',
+              {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'processing_jobs',
+                filter: `id=eq.${result.db_record_id}`,
+              },
+              (payload) => {
+                console.log('Processing job updated:', payload);
+                const updatedJob = payload.new as any;
+                
+                if (updatedJob.status === 'completed' && updatedJob.enhanced_image_url) {
+                  // Show the enhanced image result
+                  const botMessage: Message = {
+                    id: (Date.now() + 1).toString(),
+                    content: "Here's your enhanced image!",
+                    isUser: false,
+                    timestamp: new Date(),
+                    image: updatedJob.enhanced_image_url,
+                  };
+                  setMessages(prev => [...prev, botMessage]);
+                  setIsProcessing(false);
+                  
+                  // Clean up subscription
+                  supabase.removeChannel(channel);
+                } else if (updatedJob.status === 'failed') {
+                  // Show error message
+                  const errorMessage: Message = {
+                    id: (Date.now() + 1).toString(),
+                    content: updatedJob.error_message || "Sorry, image processing failed. Please try again.",
+                    isUser: false,
+                    timestamp: new Date(),
+                  };
+                  setMessages(prev => [...prev, errorMessage]);
+                  setIsProcessing(false);
+                  
+                  // Clean up subscription
+                  supabase.removeChannel(channel);
+                }
+              }
+            )
+            .subscribe();
+
+          // Set up timeout fallback (5 minutes)
+          setTimeout(() => {
+            if (isProcessing) {
+              const timeoutMessage: Message = {
+                id: (Date.now() + 1).toString(),
+                content: "Processing is taking longer than expected. Please try uploading again.",
+                isUser: false,
+                timestamp: new Date(),
+              };
+              setMessages(prev => [...prev, timeoutMessage]);
+              setIsProcessing(false);
+              supabase.removeChannel(channel);
+            }
+          }, 300000); // 5 minutes
+
         } else {
           const errorMessage: Message = {
             id: (Date.now() + 1).toString(),
@@ -333,6 +392,7 @@ const Index = () => {
             timestamp: new Date(),
           };
           setMessages(prev => [...prev, errorMessage]);
+          setIsProcessing(false);
         }
       } catch (error) {
         console.error('Error uploading file:', error);
@@ -343,6 +403,7 @@ const Index = () => {
           timestamp: new Date(),
         };
         setMessages(prev => [...prev, errorMessage]);
+        setIsProcessing(false);
       }
     }
   };
@@ -417,7 +478,7 @@ const Index = () => {
               </div>
             ))}
             
-            {(isLoading || isUploading) && (
+            {(isLoading || isUploading || isProcessing) && (
               <div className="flex justify-start animate-fade-in">
                 <div className="bg-card/50 backdrop-blur-xl border border-border rounded-2xl p-4 shadow-xl">
                   <div className="flex space-x-2 items-center">
