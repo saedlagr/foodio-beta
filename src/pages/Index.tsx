@@ -322,21 +322,39 @@ const Index = () => {
         const result = await uploadImage(file, `Process this ${imageType} food image: ${file.name}`, imageType);
         
         if (result.success && result.db_record_id) {
-          // Send the processing request to n8n (fire and forget)
-          fetch('https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              body: {
-                jobId: result.db_record_id,
-                imageUrl: result.image_url,
-                message: `Process this ${imageType} food image: ${file.name}`
-              }
-            }),
-          }).catch(error => {
-            console.error('Error calling webhook:', error);
+          // Wait for the n8n webhook response
+          try {
+            const webhookResponse = await fetch('https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                body: {
+                  jobId: result.db_record_id,
+                  imageUrl: result.image_url,
+                  message: `Process this ${imageType} food image: ${file.name}`
+                }
+              }),
+            });
+
+            if (webhookResponse.ok) {
+              const responseData = await webhookResponse.json();
+              
+              // Show the enhanced image result
+              const botMessage: Message = {
+                id: (Date.now() + 1).toString(),
+                content: responseData.message || "Here's your enhanced image!",
+                isUser: false,
+                timestamp: new Date(),
+                image: responseData.enhancedImageUrl || responseData.image_url,
+              };
+              setMessages(prev => [...prev, botMessage]);
+            } else {
+              throw new Error(`Webhook error! status: ${webhookResponse.status}`);
+            }
+          } catch (webhookError) {
+            console.error('Error calling webhook:', webhookError);
             const errorMessage: Message = {
               id: (Date.now() + 1).toString(),
               content: "Sorry, image processing failed. Please try again.",
@@ -344,11 +362,8 @@ const Index = () => {
               timestamp: new Date(),
             };
             setMessages(prev => [...prev, errorMessage]);
-            setIsProcessing(false);
-          });
-
-          // Keep processing state active - will be updated when n8n calls back
-          // The processing state will remain until we get the actual result
+          }
+          setIsProcessing(false);
           
         } else {
           const errorMessage: Message = {
