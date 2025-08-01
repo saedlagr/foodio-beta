@@ -322,68 +322,81 @@ const Index = () => {
         const result = await uploadImage(file, `Process this ${imageType} food image: ${file.name}`, imageType);
         
         if (result.success && result.db_record_id) {
-          // Start listening for processing completion via realtime
-          const channel = supabase
-            .channel('processing-updates')
-            .on(
-              'postgres_changes',
-              {
-                event: 'UPDATE',
-                schema: 'public',
-                table: 'processing_jobs',
-                filter: `id=eq.${result.db_record_id}`,
+          // Now start the n8n webhook processing and wait for response
+          try {
+            const webhookResponse = await fetch('https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
               },
-              (payload) => {
-                console.log('Processing job updated:', payload);
-                const updatedJob = payload.new as any;
-                
-                if (updatedJob.status === 'completed' && updatedJob.enhanced_image_url) {
-                  // Show the enhanced image result
-                  const botMessage: Message = {
-                    id: (Date.now() + 1).toString(),
-                    content: "Here's your enhanced image!",
-                    isUser: false,
-                    timestamp: new Date(),
-                    image: updatedJob.enhanced_image_url,
-                  };
-                  setMessages(prev => [...prev, botMessage]);
-                  setIsProcessing(false);
-                  
-                  // Clean up subscription
-                  supabase.removeChannel(channel);
-                } else if (updatedJob.status === 'failed') {
-                  // Show error message
-                  const errorMessage: Message = {
-                    id: (Date.now() + 1).toString(),
-                    content: updatedJob.error_message || "Sorry, image processing failed. Please try again.",
-                    isUser: false,
-                    timestamp: new Date(),
-                  };
-                  setMessages(prev => [...prev, errorMessage]);
-                  setIsProcessing(false);
-                  
-                  // Clean up subscription
-                  supabase.removeChannel(channel);
+              body: JSON.stringify({
+                body: {
+                  jobId: result.db_record_id,
+                  imageUrl: result.image_url,
+                  message: `Process this ${imageType} food image: ${file.name}`
                 }
+              }),
+            });
+
+            if (webhookResponse.ok) {
+              const contentType = webhookResponse.headers.get('content-type');
+              
+              if (contentType && contentType.includes('image/')) {
+                // Handle direct binary image response
+                const imageBlob = await webhookResponse.blob();
+                const enhancedImageUrl = URL.createObjectURL(imageBlob);
+                
+                // Show the enhanced image result
+                const botMessage: Message = {
+                  id: (Date.now() + 1).toString(),
+                  content: "Here's your enhanced image!",
+                  isUser: false,
+                  timestamp: new Date(),
+                  image: enhancedImageUrl,
+                };
+                setMessages(prev => [...prev, botMessage]);
+                setIsProcessing(false);
+              } else {
+                // Handle text/JSON response that might contain image URL
+                const responseText = await webhookResponse.text();
+                let data;
+                try {
+                  data = responseText ? JSON.parse(responseText) : {};
+                } catch (e) {
+                  data = { message: responseText };
+                }
+                
+                const messageContent = data.message || data.output || data.result || responseText || "Processing completed!";
+                
+                // Check if the message contains an image URL
+                const imageUrlMatch = messageContent.match(/https:\/\/[^\s]*/);
+                const enhancedImageUrl = imageUrlMatch ? imageUrlMatch[0] : undefined;
+                
+                const botMessage: Message = {
+                  id: (Date.now() + 1).toString(),
+                  content: enhancedImageUrl ? "Here's your enhanced image!" : messageContent,
+                  isUser: false,
+                  timestamp: new Date(),
+                  image: enhancedImageUrl,
+                };
+                setMessages(prev => [...prev, botMessage]);
+                setIsProcessing(false);
               }
-            )
-            .subscribe();
-
-          // Set up timeout fallback (5 minutes)
-          setTimeout(() => {
-            if (isProcessing) {
-              const timeoutMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                content: "Processing is taking longer than expected. Please try uploading again.",
-                isUser: false,
-                timestamp: new Date(),
-              };
-              setMessages(prev => [...prev, timeoutMessage]);
-              setIsProcessing(false);
-              supabase.removeChannel(channel);
+            } else {
+              throw new Error(`Webhook error! status: ${webhookResponse.status}`);
             }
-          }, 300000); // 5 minutes
-
+          } catch (webhookError) {
+            console.error('Error calling webhook:', webhookError);
+            
+            const errorMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              content: "Sorry, image processing failed. Please try again.",
+              isUser: false,
+              timestamp: new Date(),
+            };
+            setMessages(prev => [...prev, errorMessage]);
+            setIsProcessing(false);
+          }
         } else {
           const errorMessage: Message = {
             id: (Date.now() + 1).toString(),
