@@ -8,7 +8,7 @@ import { Send, Paperclip } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { useImageUpload } from "@/hooks/useImageUpload";
-import { CookingLoader } from "@/components/CookingLoader";
+
 
 interface Message {
   id: string;
@@ -434,8 +434,6 @@ const Index = () => {
               </div>
             )}
             
-            {/* Full-screen cooking loader for image processing */}
-            <CookingLoader isUploading={isUploading} />
           </div>
           
           {/* Input Section */}
