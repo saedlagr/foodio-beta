@@ -209,11 +209,15 @@ export const Generator = () => {
 
         const metadata = data.metadata as any;
         
-        if (metadata?.processing_completed) {
-          // Processing completed successfully
+        if (metadata?.processing_completed && metadata?.processed_image_url) {
+          // Processing completed successfully - update with the final processed image URL
           setProcessedImages(prev => prev.map(img => 
             img.id === imageId 
-              ? { ...img, status: 'completed' as const }
+              ? { 
+                  ...img, 
+                  status: 'completed' as const,
+                  processedUrl: metadata.processed_image_url // Use the final processed URL from n8n
+                }
               : img
           ));
           

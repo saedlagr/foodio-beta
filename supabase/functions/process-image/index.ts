@@ -215,7 +215,8 @@ serve(async (req) => {
               image_type: finalImageType,
               user_id: user.id,
               folder_path: `${user.id}/${finalImageType}`,
-              db_record_id: imageRecord.id
+              db_record_id: imageRecord.id,
+              completion_webhook_url: `${supabaseUrl}/functions/v1/n8n-completion-webhook`
             }
           }),
         });
@@ -224,36 +225,47 @@ serve(async (req) => {
         
         if (webhookResponse.ok) {
           const chatResponse = await webhookResponse.text();
-          console.log('n8n processing completed for image:', imageId);
+          console.log('n8n processing started for image:', imageId);
+          console.log('n8n response:', chatResponse);
           
-          // Update the database record with the processing result if needed
+          // Update the database record to indicate processing has started
           try {
-            let processedMessage = "Image processed successfully!";
-            try {
-              const parsedResponse = JSON.parse(chatResponse);
-              processedMessage = parsedResponse.message || parsedResponse.output || parsedResponse.result || chatResponse || processedMessage;
-            } catch (e) {
-              processedMessage = chatResponse || processedMessage;
-            }
-
-            // Optional: Update the image record with processing results
             await supabase
               .from('images')
               .update({
                 metadata: {
                   ...imageRecord.metadata,
-                  processing_completed: true,
-                  processing_result: processedMessage,
-                  completed_at: new Date().toISOString()
+                  processing_started: true,
+                  processing_start_time: new Date().toISOString(),
+                  n8n_webhook_response: chatResponse
                 }
               })
               .eq('id', imageRecord.id);
               
           } catch (updateError) {
-            console.error('Error updating image record:', updateError);
+            console.error('Error updating image record with processing start:', updateError);
           }
         } else {
           console.error('n8n webhook failed with status:', webhookResponse.status);
+          const errorText = await webhookResponse.text();
+          console.error('n8n webhook error response:', errorText);
+          
+          // Update record to indicate webhook failure
+          try {
+            await supabase
+              .from('images')
+              .update({
+                metadata: {
+                  ...imageRecord.metadata,
+                  processing_failed: true,
+                  processing_error: `N8N webhook failed: ${webhookResponse.status} - ${errorText}`,
+                  failed_at: new Date().toISOString()
+                }
+              })
+              .eq('id', imageRecord.id);
+          } catch (updateError) {
+            console.error('Error updating failed webhook status:', updateError);
+          }
         }
       } catch (error) {
         console.error('Background processing error for image:', imageId, error);
