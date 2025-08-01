@@ -202,6 +202,7 @@ serve(async (req) => {
       try {
         console.log('Starting background processing for image:', imageId);
         
+        // Just trigger the webhook and mark as processing started
         const webhookResponse = await fetch('https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7', {
           method: 'POST',
           headers: {
@@ -221,77 +222,24 @@ serve(async (req) => {
           }),
         });
 
-        console.log('n8n webhook response status:', webhookResponse.status);
+        console.log('n8n webhook triggered with status:', webhookResponse.status);
         
         if (webhookResponse.ok) {
-          // Parse the direct response from n8n workflow
-          const responseText = await webhookResponse.text();
-          console.log('n8n raw response:', responseText);
+          // Just log that webhook was triggered successfully
+          console.log('N8N webhook triggered successfully for image:', imageId);
           
-          let n8nResponse;
-          try {
-            n8nResponse = JSON.parse(responseText);
-          } catch (parseError) {
-            console.error('Failed to parse n8n response as JSON:', parseError);
-            console.error('Raw response:', responseText);
-            throw new Error(`Invalid JSON response from n8n: ${parseError.message}`);
-          }
-          console.log('n8n direct response:', JSON.stringify(n8nResponse, null, 2));
-          
-          // Handle the new response format: {success, taskId, enhanced_image, original_image, filename, status, processing_completed}
-          const { 
-            success, 
-            taskId, 
-            enhanced_image, 
-            original_image, 
-            filename, 
-            status, 
-            processing_completed 
-          } = n8nResponse;
-          
-          if (success && processing_completed && enhanced_image) {
-            // Extract the enhanced image URL - enhanced_image contains the resultUrls array
-            const enhancedImageUrl = Array.isArray(enhanced_image) ? enhanced_image[0] : enhanced_image;
+          // Update database to show processing started
+          await supabase
+            .from('images')
+            .update({
+              metadata: {
+                ...imageRecord.metadata,
+                processing_started: true,
+                webhook_triggered_at: new Date().toISOString()
+              }
+            })
+            .eq('id', imageRecord.id);
             
-            console.log('Enhanced image URL:', enhancedImageUrl);
-            
-            // Update the database record with the processed image
-            await supabase
-              .from('images')
-              .update({
-                metadata: {
-                  ...imageRecord.metadata,
-                  processing_completed: true,
-                  processing_success: true,
-                  enhanced_image_url: enhancedImageUrl,
-                  task_id: taskId,
-                  n8n_status: status,
-                  completed_at: new Date().toISOString(),
-                  n8n_response: n8nResponse
-                }
-              })
-              .eq('id', imageRecord.id);
-              
-            console.log('Image processing completed successfully for:', imageId);
-          } else {
-            // Handle failure case
-            await supabase
-              .from('images')
-              .update({
-                metadata: {
-                  ...imageRecord.metadata,
-                  processing_failed: true,
-                  processing_error: `N8N processing failed: ${status || 'Unknown error'}`,
-                  task_id: taskId,
-                  n8n_status: status,
-                  failed_at: new Date().toISOString(),
-                  n8n_response: n8nResponse
-                }
-              })
-              .eq('id', imageRecord.id);
-              
-            console.error('N8N processing failed for image:', imageId);
-          }
         } else {
           console.error('n8n webhook failed with status:', webhookResponse.status);
           const errorText = await webhookResponse.text();
