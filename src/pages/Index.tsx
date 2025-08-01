@@ -339,7 +339,23 @@ const Index = () => {
             });
 
             if (webhookResponse.ok) {
-              const responseData = await webhookResponse.json();
+              const contentType = webhookResponse.headers.get('content-type');
+              let responseData;
+              
+              // Check if response has content
+              const responseText = await webhookResponse.text();
+              if (!responseText) {
+                // Empty response - just show success
+                responseData = { message: "Image processing completed!" };
+              } else if (contentType && contentType.includes('application/json')) {
+                try {
+                  responseData = JSON.parse(responseText);
+                } catch (e) {
+                  responseData = { message: responseText };
+                }
+              } else {
+                responseData = { message: responseText };
+              }
               
               // Show the enhanced image result
               const botMessage: Message = {
