@@ -8,7 +8,7 @@ import { Send, Paperclip } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { useImageUpload } from "@/hooks/useImageUpload";
-
+import { CookingLoader } from "@/components/CookingLoader";
 import { useAuth } from "@/hooks/useAuth";
 
 interface Message {
@@ -24,71 +24,11 @@ const Index = () => {
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
-  const [currentProcessingJobId, setCurrentProcessingJobId] = useState<string | null>(null);
   const { uploadImage, isUploading } = useImageUpload();
   const { user } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const location = useLocation();
-
-  // Realtime listener for processing job updates
-  useEffect(() => {
-    if (!currentProcessingJobId) return;
-
-    const channel = supabase
-      .channel('processing-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'processing_jobs',
-          filter: `id=eq.${currentProcessingJobId}`
-        },
-        (payload) => {
-          console.log('Processing job updated:', payload);
-          if (payload.new.status === 'completed' && payload.new.enhanced_image_url) {
-            setIsProcessingImage(false);
-            setCurrentProcessingJobId(null);
-            
-            // Add the completed image to chat
-            const enhancedImageMessage: Message = {
-              id: (Date.now() + 3).toString(),
-              content: "🎉 Your AI-enhanced masterpiece is ready!",
-              isUser: false,
-              timestamp: new Date(),
-              image: payload.new.enhanced_image_url,
-            };
-            setMessages(prev => [...prev, enhancedImageMessage]);
-            
-            // Optional: Show browser notification if user isn't focused
-            if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
-              new Notification('Your enhanced image is ready!', {
-                body: 'Click to view your AI-enhanced photo',
-                icon: '/lovable-uploads/fae6ccf8-cbb0-42c9-bb05-8b5112d87509.png'
-              });
-            }
-          } else if (payload.new.status === 'failed') {
-            setIsProcessingImage(false);
-            setCurrentProcessingJobId(null);
-            
-            // Add error message to chat
-            const errorMessage: Message = {
-              id: (Date.now() + 3).toString(),
-              content: `❌ Processing failed: ${payload.new.error_message || 'Unknown error occurred'}`,
-              isUser: false,
-              timestamp: new Date(),
-            };
-            setMessages(prev => [...prev, errorMessage]);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [currentProcessingJobId]);
 
   useEffect(() => {
     // Check if we have an initial prompt from navigation state
@@ -383,39 +323,74 @@ const Index = () => {
         
         if (result.success) {
           // Check if this indicates background processing has started
-          console.log('Upload result:', result);
-          console.log('Checking conditions:', {
-            hasBackground: result.message.includes("background"),
-            hasProcessing: result.message.includes("processing"),
-            hasStatus: result.processing_status === "started"
-          });
-          
-          if (result.message.includes("background") || result.message.includes("processing") || result.processing_status === "started") {
-            console.log('Starting processing animation - waiting for webhook response');
+          if (result.message.includes("background") || result.message.includes("processing")) {
+            // Start the 2-minute cooking animation
             setIsProcessingImage(true);
             
-            // Create a processing job record in the database
-            try {
-              const { data: processingJob, error } = await supabase
-                .from('processing_jobs')
-                .insert({
-                  user_id: user?.id,
-                  original_image_id: result.db_record_id!,
-                  status: 'processing'
-                })
-                .select()
-                .single();
+            // Set timer to stop the animation and deliver the image after 2 minutes
+            setTimeout(async () => {
+              setIsProcessingImage(false);
               
-              if (processingJob && !error) {
-                setCurrentProcessingJobId(processingJob.id);
-                console.log('Created processing job:', processingJob.id);
-              } else {
-                console.error('Error creating processing job:', error);
-                // Fallback - just show processing without DB tracking
+              // Try to poll for the completed image result
+              try {
+                console.log('Checking for completed processing...');
+                
+                // Send a status check message to see if we get an enhanced image back
+                const checkResponse = await fetch('https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    body: {
+                      message: `Status check for processing completed image: ${file.name}`,
+                      check_status: true
+                    }
+                  }),
+                });
+
+                if (checkResponse.ok) {
+                  const responseText = await checkResponse.text();
+                  
+                  // Check if we got an enhanced image URL back
+                  const imageUrlMatch = responseText.match(/https:\/\/tempfile\.aiquickdraw\.com[^\s]*/);
+                  
+                  if (imageUrlMatch) {
+                    // We got the enhanced image! Show it
+                    const enhancedImageMessage: Message = {
+                      id: (Date.now() + 3).toString(),
+                      content: "🎉 Voilà! Your AI-enhanced masterpiece is ready to serve!",
+                      isUser: false,
+                      timestamp: new Date(),
+                      image: imageUrlMatch[0],
+                    };
+                    setMessages(prev => [...prev, enhancedImageMessage]);
+                  } else {
+                    // No image yet, show completion message
+                    const completionMessage: Message = {
+                      id: (Date.now() + 2).toString(),
+                      content: "🎉 Your enhanced image should be ready! If you don't see it yet, please try sending a message to check status.",
+                      isUser: false,
+                      timestamp: new Date(),
+                    };
+                    setMessages(prev => [...prev, completionMessage]);
+                  }
+                } else {
+                  throw new Error('Status check failed');
+                }
+              } catch (error) {
+                console.error('Error checking image status:', error);
+                
+                // Fallback completion message
+                const completionMessage: Message = {
+                  id: (Date.now() + 2).toString(),
+                  content: "🎉 Processing complete! Your enhanced image should be ready. Try sending a message to retrieve it!",
+                  isUser: false,
+                  timestamp: new Date(),
+                };
+                setMessages(prev => [...prev, completionMessage]);
               }
-            } catch (error) {
-              console.error('Error creating processing job:', error);
-            }
+            }, 150000); // 2.5 minutes = 150,000ms
           }
           
           const botMessage: Message = {
@@ -537,20 +512,8 @@ const Index = () => {
               </div>
             )}
             
-            {isProcessingImage && (
-              <div className="flex justify-start animate-fade-in">
-                <div className="bg-card/50 backdrop-blur-xl border border-border rounded-2xl p-4 shadow-xl">
-                  <div className="flex space-x-2 items-center">
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                    </div>
-                    <span className="text-muted-foreground text-sm ml-2">Processing image...</span>
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* Full-screen cooking loader for image processing */}
+            <CookingLoader isUploading={isProcessingImage} />
           </div>
           
           {/* Input Section */}

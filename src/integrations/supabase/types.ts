@@ -56,53 +56,6 @@ export type Database = {
         }
         Relationships: []
       }
-      processing_jobs: {
-        Row: {
-          completed_at: string | null
-          created_at: string
-          enhanced_image_url: string | null
-          error_message: string | null
-          id: string
-          metadata: Json | null
-          original_image_id: string
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          completed_at?: string | null
-          created_at?: string
-          enhanced_image_url?: string | null
-          error_message?: string | null
-          id?: string
-          metadata?: Json | null
-          original_image_id: string
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          completed_at?: string | null
-          created_at?: string
-          enhanced_image_url?: string | null
-          error_message?: string | null
-          id?: string
-          metadata?: Json | null
-          original_image_id?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_processing_jobs_original_image"
-            columns: ["original_image_id"]
-            isOneToOne: false
-            referencedRelation: "images"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           avatar_url: string | null
