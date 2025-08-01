@@ -5,8 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, Image as ImageIcon, Settings, Zap, X } from "lucide-react";
+import { Loader2, Upload, Image as ImageIcon, Settings, Zap, X, Trash2 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ProcessedImage {
@@ -16,6 +17,7 @@ interface ProcessedImage {
   status: 'processing' | 'completed' | 'error';
   processedUrl?: string;
   timestamp: Date;
+  supabaseFileName?: string;
 }
 
 export const Generator = () => {
@@ -23,6 +25,7 @@ export const Generator = () => {
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processedImages, setProcessedImages] = useState<ProcessedImage[]>([]);
+  const [deleteImageId, setDeleteImageId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -59,6 +62,9 @@ export const Generator = () => {
 
     try {
       for (const image of selectedImages) {
+        // Upload image to Supabase storage first
+        const fileName = `${Date.now()}-${image.name}`;
+        
         // Add to processing list
         const newProcessedImage: ProcessedImage = {
           id: Date.now().toString() + Math.random(),
@@ -66,13 +72,12 @@ export const Generator = () => {
           originalName: image.name,
           status: 'processing',
           timestamp: new Date(),
+          supabaseFileName: fileName,
         };
 
         setProcessedImages(prev => [newProcessedImage, ...prev]);
 
         try {
-          // Upload image to Supabase storage first
-          const fileName = `${Date.now()}-${image.name}`;
           const { data: uploadData, error: uploadError } = await supabase.storage
             .from('image-transformations')
             .upload(fileName, image);
@@ -86,39 +91,60 @@ export const Generator = () => {
             .from('image-transformations')
             .getPublicUrl(fileName);
 
-          // Send the Supabase URL to your webhook
-          const response = await fetch(webhookUrl, {
-            method: "POST",
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              imageUrl: publicUrl,
-              filename: image.name,
-              timestamp: new Date().toISOString(),
-            }),
-          });
+          // Send the Supabase URL to your webhook with timeout handling
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+          
+          try {
+            const response = await fetch(webhookUrl, {
+              method: "POST",
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                imageUrl: publicUrl,
+                filename: image.name,
+                timestamp: new Date().toISOString(),
+              }),
+              signal: controller.signal,
+            });
 
-          if (response.ok) {
-            const result = await response.text();
-            let processedUrl = result;
-            
-            // If the response is JSON, try to extract the URL
-            try {
-              const jsonResult = JSON.parse(result);
-              processedUrl = jsonResult.processedImageUrl || jsonResult.url || result;
-            } catch {
-              // Use the text response as the URL
+            clearTimeout(timeoutId);
+
+            if (response.ok) {
+              const result = await response.text();
+              let processedUrl = result;
+              
+              // If the response is JSON, try to extract the URL
+              try {
+                const jsonResult = JSON.parse(result);
+                processedUrl = jsonResult.processedImageUrl || jsonResult.url || result;
+              } catch {
+                // Use the text response as the URL
+              }
+
+              // Update with the processed image URL
+              setProcessedImages(prev => prev.map(img => 
+                img.id === newProcessedImage.id 
+                  ? { ...img, status: 'completed' as const, processedUrl }
+                  : img
+              ));
+            } else {
+              throw new Error(`Webhook failed: ${response.status}`);
             }
-
-            // Update with the processed image URL
-            setProcessedImages(prev => prev.map(img => 
-              img.id === newProcessedImage.id 
-                ? { ...img, status: 'completed' as const, processedUrl }
-                : img
-            ));
-          } else {
-            throw new Error(`Webhook failed: ${response.status}`);
+          } catch (fetchError) {
+            clearTimeout(timeoutId);
+            if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+              // Webhook request timed out, but image is uploaded to Supabase
+              // Keep status as processing - the n8n workflow might still complete
+              console.log('Webhook request timed out, but processing may continue...');
+              toast({
+                title: "Processing started",
+                description: `Image "${image.name}" uploaded successfully. Processing may take 3-4 minutes.`,
+              });
+            } else {
+              throw fetchError;
+            }
           }
 
         } catch (error) {
@@ -177,6 +203,41 @@ export const Generator = () => {
       default:
         return 'Unknown';
     }
+  };
+
+  const handleDeleteImage = async (imageId: string) => {
+    const imageToDelete = processedImages.find(img => img.id === imageId);
+    if (!imageToDelete) return;
+
+    try {
+      // Delete from Supabase storage if fileName exists
+      if (imageToDelete.supabaseFileName) {
+        const { error } = await supabase.storage
+          .from('image-transformations')
+          .remove([imageToDelete.supabaseFileName]);
+        
+        if (error) {
+          console.error('Error deleting from Supabase:', error);
+        }
+      }
+
+      // Remove from local state
+      setProcessedImages(prev => prev.filter(img => img.id !== imageId));
+      
+      toast({
+        title: "Image deleted",
+        description: "The image has been removed from your account and storage",
+      });
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      toast({
+        title: "Delete failed",
+        description: "Failed to delete the image",
+        variant: "destructive",
+      });
+    }
+    
+    setDeleteImageId(null);
   };
 
   return (
@@ -302,10 +363,18 @@ export const Generator = () => {
                                {image.timestamp.toLocaleTimeString()}
                              </p>
                            </div>
-                           <div className="flex items-center gap-2">
-                             <div className={`w-3 h-3 rounded-full ${getStatusColor(image.status)}`} />
-                             <span className="text-sm font-medium">{getStatusText(image.status)}</span>
-                           </div>
+                            <div className="flex items-center gap-2">
+                              <div className={`w-3 h-3 rounded-full ${getStatusColor(image.status)}`} />
+                              <span className="text-sm font-medium">{getStatusText(image.status)}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setDeleteImageId(image.id)}
+                                className="ml-2 p-1 h-8 w-8"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
                          </div>
                          
                          {/* Show transformed image when completed */}
@@ -376,6 +445,27 @@ export const Generator = () => {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteImageId !== null} onOpenChange={() => setDeleteImageId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the image from your account and remove it from storage. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteImageId && handleDeleteImage(deleteImageId)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
