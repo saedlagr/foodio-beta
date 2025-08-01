@@ -72,19 +72,23 @@ export const Dashboard = () => {
 
   const handleDeleteImage = async (imageId: string, filePath: string) => {
     try {
-      // Delete from storage
-      const fileName = filePath.split('/').pop();
-      if (fileName) {
-        await supabase.storage.from('food-images').remove([fileName]);
+      // Delete from storage - use the full file path
+      const { error: storageError } = await supabase.storage
+        .from('food-images')
+        .remove([filePath]);
+
+      if (storageError) {
+        console.error('Storage deletion error:', storageError);
+        // Continue with database deletion even if storage fails
       }
 
       // Delete from database
-      const { error } = await supabase
+      const { error: dbError } = await supabase
         .from('images')
         .delete()
         .eq('id', imageId);
 
-      if (error) throw error;
+      if (dbError) throw dbError;
 
       toast({
         title: "Success",
