@@ -1,35 +1,54 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Settings, Zap } from "lucide-react";
+import { Loader2, Upload, Image as ImageIcon, Settings, Zap, X } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
-interface GeneratedImage {
+interface ProcessedImage {
   id: string;
-  url: string;
-  prompt: string;
+  originalUrl: string;
+  originalName: string;
+  status: 'processing' | 'completed' | 'error';
+  processedUrl?: string;
   timestamp: Date;
 }
 
 export const Generator = () => {
-  const [prompt, setPrompt] = useState("");
   const [webhookUrl, setWebhookUrl] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [styleIntensity, setStyleIntensity] = useState([0.7]);
-  const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processedImages, setProcessedImages] = useState<ProcessedImage[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const handleGenerate = async () => {
-    if (!prompt.trim()) {
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    
+    if (imageFiles.length !== files.length) {
       toast({
-        title: "Error",
-        description: "Please enter a prompt",
+        title: "Invalid files",
+        description: "Only image files are allowed",
+        variant: "destructive",
+      });
+    }
+    
+    setSelectedImages(prev => [...prev, ...imageFiles]);
+  };
+
+  const removeImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleProcess = async () => {
+    if (selectedImages.length === 0) {
+      toast({
+        title: "No images selected",
+        description: "Please select at least one image to process",
         variant: "destructive",
       });
       return;
@@ -37,55 +56,102 @@ export const Generator = () => {
 
     if (!webhookUrl.trim()) {
       toast({
-        title: "Error",
+        title: "No webhook URL",
         description: "Please enter your n8n webhook URL",
         variant: "destructive",
       });
       return;
     }
 
-    setIsGenerating(true);
+    setIsProcessing(true);
 
     try {
-      const response = await fetch(webhookUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        mode: "no-cors",
-        body: JSON.stringify({
-          prompt: prompt.trim(),
-          style_intensity: styleIntensity[0],
-          timestamp: new Date().toISOString(),
-          user_id: "test-user", // You can replace this with actual user ID
-        }),
-      });
+      for (const image of selectedImages) {
+        const formData = new FormData();
+        formData.append('image', image);
+        formData.append('timestamp', new Date().toISOString());
+        formData.append('filename', image.name);
+
+        // Add to processing list
+        const newProcessedImage: ProcessedImage = {
+          id: Date.now().toString() + Math.random(),
+          originalUrl: URL.createObjectURL(image),
+          originalName: image.name,
+          status: 'processing',
+          timestamp: new Date(),
+        };
+
+        setProcessedImages(prev => [newProcessedImage, ...prev]);
+
+        try {
+          const response = await fetch(webhookUrl, {
+            method: "POST",
+            body: formData,
+            mode: "no-cors",
+          });
+
+          // Update status to completed (we can't get actual response due to no-cors)
+          setProcessedImages(prev => prev.map(img => 
+            img.id === newProcessedImage.id 
+              ? { ...img, status: 'completed' as const }
+              : img
+          ));
+
+        } catch (error) {
+          console.error("Error sending image:", error);
+          setProcessedImages(prev => prev.map(img => 
+            img.id === newProcessedImage.id 
+              ? { ...img, status: 'error' as const }
+              : img
+          ));
+        }
+      }
 
       toast({
-        title: "Generation Started",
-        description: "Your request has been sent to n8n. Check your webhook for processing status.",
+        title: "Images sent for processing",
+        description: `${selectedImages.length} image(s) sent to your n8n webhook`,
       });
 
-      // For demo purposes, add a placeholder image
-      const newImage: GeneratedImage = {
-        id: Date.now().toString(),
-        url: "/placeholder.svg", // This would be replaced by actual generated image URL
-        prompt: prompt.trim(),
-        timestamp: new Date(),
-      };
-
-      setGeneratedImages(prev => [newImage, ...prev]);
-      setPrompt("");
+      setSelectedImages([]);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
 
     } catch (error) {
-      console.error("Error calling webhook:", error);
+      console.error("Error processing images:", error);
       toast({
-        title: "Error",
-        description: "Failed to trigger generation. Please check your webhook URL.",
+        title: "Processing failed",
+        description: "Failed to send images to webhook",
         variant: "destructive",
       });
     } finally {
-      setIsGenerating(false);
+      setIsProcessing(false);
+    }
+  };
+
+  const getStatusColor = (status: ProcessedImage['status']) => {
+    switch (status) {
+      case 'processing':
+        return 'bg-yellow-500';
+      case 'completed':
+        return 'bg-green-500';
+      case 'error':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  const getStatusText = (status: ProcessedImage['status']) => {
+    switch (status) {
+      case 'processing':
+        return 'Processing...';
+      case 'completed':
+        return 'Sent to webhook';
+      case 'error':
+        return 'Failed';
+      default:
+        return 'Unknown';
     }
   };
 
@@ -96,9 +162,9 @@ export const Generator = () => {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Zap className="w-4 h-4 text-primary-foreground" />
+              <ImageIcon className="w-4 h-4 text-primary-foreground" />
             </div>
-            <h1 className="text-xl font-bold">AI Generator</h1>
+            <h1 className="text-xl font-bold">Image Transformer</h1>
           </div>
           <div className="flex items-center gap-4">
             <Badge variant="secondary" className="gap-1">
@@ -112,7 +178,7 @@ export const Generator = () => {
 
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Generation Area */}
+          {/* Main Upload Area */}
           <div className="lg:col-span-2">
             <Card className="mb-6">
               <CardContent className="p-6">
@@ -129,30 +195,70 @@ export const Generator = () => {
                   </div>
                   
                   <div>
-                    <Label htmlFor="prompt">Describe what you want to create</Label>
-                    <Textarea
-                      id="prompt"
-                      placeholder="A vibrant character wearing a colorful dress that sways with her every movement..."
-                      value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
-                      className="mt-2 min-h-[100px] resize-none"
-                    />
+                    <Label>Upload Images</Label>
+                    <div 
+                      className="mt-2 border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-muted-foreground/50 transition-colors cursor-pointer"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                      <p className="text-lg font-medium">Drop images here or click to browse</p>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Supports PNG, JPG, JPEG, WebP
+                      </p>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                        className="hidden"
+                      />
+                    </div>
                   </div>
 
+                  {/* Selected Images Preview */}
+                  {selectedImages.length > 0 && (
+                    <div>
+                      <Label>Selected Images ({selectedImages.length})</Label>
+                      <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        {selectedImages.map((image, index) => (
+                          <div key={index} className="relative group">
+                            <div className="aspect-square bg-muted rounded-lg overflow-hidden">
+                              <img
+                                src={URL.createObjectURL(image)}
+                                alt={image.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <button
+                              onClick={() => removeImage(index)}
+                              className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                            <p className="text-xs text-muted-foreground mt-1 truncate">
+                              {image.name}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <Button 
-                    onClick={handleGenerate} 
-                    disabled={isGenerating}
+                    onClick={handleProcess} 
+                    disabled={isProcessing || selectedImages.length === 0}
                     className="w-full h-12 text-lg font-medium"
                     size="lg"
                   >
-                    {isGenerating ? (
+                    {isProcessing ? (
                       <>
                         <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        Generating...
+                        Processing {selectedImages.length} image(s)...
                       </>
                     ) : (
                       <>
-                        Generate
+                        Send to Webhook
                         <Zap className="w-5 h-5 ml-2" />
                       </>
                     )}
@@ -161,27 +267,31 @@ export const Generator = () => {
               </CardContent>
             </Card>
 
-            {/* Generated Images Grid */}
-            {generatedImages.length > 0 && (
+            {/* Processed Images History */}
+            {processedImages.length > 0 && (
               <Card>
                 <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">Recent Generations</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {generatedImages.map((image) => (
-                      <div key={image.id} className="space-y-2">
-                        <div className="aspect-square bg-muted rounded-lg overflow-hidden">
+                  <h3 className="text-lg font-semibold mb-4">Processing History</h3>
+                  <div className="space-y-4">
+                    {processedImages.map((image) => (
+                      <div key={image.id} className="flex items-center gap-4 p-4 border rounded-lg">
+                        <div className="w-16 h-16 bg-muted rounded-lg overflow-hidden flex-shrink-0">
                           <img
-                            src={image.url}
-                            alt={image.prompt}
+                            src={image.originalUrl}
+                            alt={image.originalName}
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {image.prompt}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {image.timestamp.toLocaleTimeString()}
-                        </p>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{image.originalName}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {image.timestamp.toLocaleTimeString()}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className={`w-3 h-3 rounded-full ${getStatusColor(image.status)}`} />
+                          <span className="text-sm font-medium">{getStatusText(image.status)}</span>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -200,43 +310,14 @@ export const Generator = () => {
                 </div>
                 
                 <div className="space-y-4">
-                  <div>
-                    <Label>Style Intensity</Label>
-                    <div className="mt-2 space-y-2">
-                      <Slider
-                        value={styleIntensity}
-                        onValueChange={setStyleIntensity}
-                        max={1}
-                        min={0}
-                        step={0.1}
-                        className="w-full"
-                      />
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>Subtle</span>
-                        <span>{styleIntensity[0].toFixed(1)}</span>
-                        <span>Strong</span>
-                      </div>
-                    </div>
-                  </div>
-
                   <div className="pt-4 border-t">
-                    <Label className="text-sm font-medium">Quick Prompts</Label>
-                    <div className="mt-2 space-y-2">
-                      {[
-                        "Anime character in vibrant colors",
-                        "Fantasy landscape with magic",
-                        "Cyberpunk city at night",
-                        "Cute animal illustration"
-                      ].map((quickPrompt) => (
-                        <Button
-                          key={quickPrompt}
-                          variant="outline"
-                          size="sm"
-                          className="w-full justify-start text-left h-auto py-2 px-3"
-                          onClick={() => setPrompt(quickPrompt)}
-                        >
-                          <span className="text-xs">{quickPrompt}</span>
-                        </Button>
+                    <Label className="text-sm font-medium">Supported Formats</Label>
+                    <div className="mt-2 space-y-1">
+                      {['PNG', 'JPG', 'JPEG', 'WebP'].map((format) => (
+                        <div key={format} className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full" />
+                          <span className="text-sm text-muted-foreground">{format}</span>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -254,11 +335,11 @@ export const Generator = () => {
                   </div>
                   <div className="flex gap-3">
                     <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-bold">2</div>
-                    <p>Describe your image idea</p>
+                    <p>Upload one or more images</p>
                   </div>
                   <div className="flex gap-3">
                     <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-bold">3</div>
-                    <p>Click generate to trigger your n8n workflow</p>
+                    <p>Images are sent to your webhook for processing</p>
                   </div>
                 </div>
               </CardContent>
