@@ -225,7 +225,17 @@ serve(async (req) => {
         
         if (webhookResponse.ok) {
           // Parse the direct response from n8n workflow
-          const n8nResponse = await webhookResponse.json();
+          const responseText = await webhookResponse.text();
+          console.log('n8n raw response:', responseText);
+          
+          let n8nResponse;
+          try {
+            n8nResponse = JSON.parse(responseText);
+          } catch (parseError) {
+            console.error('Failed to parse n8n response as JSON:', parseError);
+            console.error('Raw response:', responseText);
+            throw new Error(`Invalid JSON response from n8n: ${parseError.message}`);
+          }
           console.log('n8n direct response:', JSON.stringify(n8nResponse, null, 2));
           
           // Handle the new response format: {success, taskId, enhanced_image, original_image, filename, status, processing_completed}
