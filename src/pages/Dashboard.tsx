@@ -1,26 +1,28 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Plus, Camera, Upload, Star, Heart, Eye, Settings, LogOut, MapPin } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Plus, Camera, Upload, Star, Heart, Eye, Settings, LogOut, MapPin, Trash2, Edit } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { useAuth } from "@/hooks/useAuth";
 import { useTokens } from "@/hooks/useTokens";
+import { useProfileUpload } from "@/hooks/useProfileUpload";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 export const Dashboard = () => {
   const navigate = useNavigate();
-  const {
-    user,
-    signOut
-  } = useAuth();
-  const {
-    getUserTokens
-  } = useTokens();
+  const { user, signOut } = useAuth();
+  const { getUserTokens } = useTokens();
+  const { uploadProfilePicture, isUploading } = useProfileUpload();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [profile, setProfile] = useState<any>(null);
   const [tokens, setTokens] = useState<number>(0);
   const [images, setImages] = useState<any[]>([]);
@@ -55,6 +57,50 @@ export const Dashboard = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
+  };
+
+  const handleProfilePictureUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    const result = await uploadProfilePicture(file, user.id);
+    if (result.success) {
+      // Refresh profile data
+      fetchProfile();
+    }
+  };
+
+  const handleDeleteImage = async (imageId: string, filePath: string) => {
+    try {
+      // Delete from storage
+      const fileName = filePath.split('/').pop();
+      if (fileName) {
+        await supabase.storage.from('food-images').remove([fileName]);
+      }
+
+      // Delete from database
+      const { error } = await supabase
+        .from('images')
+        .delete()
+        .eq('id', imageId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Image deleted successfully!",
+      });
+
+      // Refresh images
+      fetchImages();
+    } catch (error: any) {
+      console.error('Error deleting image:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete image",
+        variant: "destructive",
+      });
+    }
   };
   const photoCount = images.length;
   return <div className="min-h-screen text-white relative overflow-hidden">
@@ -126,7 +172,23 @@ export const Dashboard = () => {
                     {profile?.full_name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || "U"}
                   </AvatarFallback>
                 </Avatar>
-                <Badge className="absolute -bottom-2 -right-2 bg-primary">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfilePictureUpload}
+                  className="hidden"
+                />
+                <Badge className="absolute -top-2 -right-2 bg-primary">
                   PRO
                 </Badge>
               </div>
@@ -220,6 +282,30 @@ export const Dashboard = () => {
                       <Button size="sm" variant="secondary" className="h-8 w-8 p-0">
                         <Eye className="h-4 w-4" />
                       </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="destructive" className="h-8 w-8 p-0">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Image</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete this image? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteImage(image.id, image.file_path)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 </div>
