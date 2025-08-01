@@ -242,6 +242,18 @@ const Index = () => {
           const responseText = await response.text();
           console.log('Raw response length:', responseText.length);
           
+          // Check if this is a Cloudflare error page
+          if (responseText.includes('<!DOCTYPE html>') && responseText.includes('timeout occurred')) {
+            const botMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              content: "The image processing service is currently experiencing high load. Please try again in a few moments. 🔄",
+              isUser: false,
+              timestamp: new Date(),
+            };
+            setMessages(prev => [...prev, botMessage]);
+            return;
+          }
+          
           let data;
           try {
             data = responseText ? JSON.parse(responseText) : {};
