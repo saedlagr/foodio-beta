@@ -6,6 +6,7 @@ interface UploadResult {
   success: boolean;
   message: string;
   image_id?: string;
+  db_record_id?: string;
   image_url?: string;
   tokens_remaining?: number;
   processing_status?: string;

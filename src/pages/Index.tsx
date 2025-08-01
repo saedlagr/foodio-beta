@@ -400,7 +400,7 @@ const Index = () => {
                 .from('processing_jobs')
                 .insert({
                   user_id: user?.id,
-                  original_image_id: result.image_id!,
+                  original_image_id: result.db_record_id!,
                   status: 'processing'
                 })
                 .select()
