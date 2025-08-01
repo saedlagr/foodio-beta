@@ -39,7 +39,14 @@ serve(async (req) => {
 
     if (!db_record_id) {
       console.error('No db_record_id provided in webhook data');
-      return new Response(JSON.stringify({ error: 'Missing db_record_id' }), {
+      console.error('Received webhook data:', JSON.stringify(webhookData, null, 2));
+      
+      return new Response(JSON.stringify({ 
+        error: 'Missing db_record_id',
+        received_data: webhookData,
+        error_id: crypto.randomUUID(),
+        timestamp: new Date().toISOString()
+      }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -121,9 +128,22 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in n8n-completion function:', error);
+    
+    // Enhanced error logging
+    const errorDetails = {
+      message: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString(),
+      webhookData: webhookData || null
+    };
+    
+    console.error('Enhanced error details:', JSON.stringify(errorDetails, null, 2));
+    
     return new Response(JSON.stringify({ 
       error: 'An unexpected error occurred', 
-      details: error.message 
+      details: error.message,
+      error_id: crypto.randomUUID(), // For tracking
+      timestamp: new Date().toISOString()
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

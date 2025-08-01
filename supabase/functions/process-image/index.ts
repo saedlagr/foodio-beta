@@ -197,83 +197,98 @@ serve(async (req) => {
     // Get remaining tokens for response
     const remainingTokens = profile.tokens - 1;
 
-    // Start background task for n8n processing without waiting
+    // Enhanced background task for n8n processing with retry logic
     const backgroundProcessing = async () => {
-      try {
-        console.log('Starting background processing for image:', imageId);
-        
-        // Just trigger the webhook and mark as processing started
-        const webhookResponse = await fetch('https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            body: {
-              message: `New ${finalImageType} image uploaded: "${imageFile.name}". ${message || 'Please analyze this food image.'}`,
-              image_id: imageId,
-              image_url: publicURL.publicUrl,
-              image_type: finalImageType,
-              user_id: user.id,
-              folder_path: `${user.id}/${finalImageType}`,
-              db_record_id: imageRecord.id,
-              filename: imageFile.name
-            }
-          }),
-        });
+      const maxRetries = 3;
+      const retryDelay = 5000; // 5 seconds between retries
+      let attempt = 0;
+      
+      const triggerWebhook = async (): Promise<boolean> => {
+        try {
+          console.log(`Attempt ${attempt + 1}/${maxRetries} to trigger n8n webhook for image:`, imageId);
+          
+          const webhookResponse = await fetch('https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'User-Agent': 'Foodio-AI-Agent/1.0'
+            },
+            body: JSON.stringify({
+              body: {
+                message: `New ${finalImageType} image uploaded: "${imageFile.name}". ${message || 'Please analyze this food image.'}`,
+                image_id: imageId,
+                image_url: publicURL.publicUrl,
+                image_type: finalImageType,
+                user_id: user.id,
+                folder_path: `${user.id}/${finalImageType}`,
+                db_record_id: imageRecord.id,
+                filename: imageFile.name,
+                timestamp: new Date().toISOString(),
+                processing_priority: 'normal'
+              }
+            }),
+          });
 
-        console.log('n8n webhook triggered with status:', webhookResponse.status);
-        
-        if (webhookResponse.ok) {
-          // Just log that webhook was triggered successfully
-          console.log('N8N webhook triggered successfully for image:', imageId);
+          console.log('n8n webhook response status:', webhookResponse.status);
           
-          // Update database to show processing started
-          await supabase
-            .from('images')
-            .update({
-              metadata: {
-                ...imageRecord.metadata,
-                processing_started: true,
-                webhook_triggered_at: new Date().toISOString()
-              }
-            })
-            .eq('id', imageRecord.id);
-            
-        } else {
-          console.error('n8n webhook failed with status:', webhookResponse.status);
-          const errorText = await webhookResponse.text();
-          console.error('n8n webhook error response:', errorText);
-          
-          // Update record to indicate webhook failure
-          await supabase
-            .from('images')
-            .update({
-              metadata: {
-                ...imageRecord.metadata,
-                processing_failed: true,
-                processing_error: `N8N webhook failed: ${webhookResponse.status} - ${errorText}`,
-                failed_at: new Date().toISOString()
-              }
-            })
-            .eq('id', imageRecord.id);
+          if (webhookResponse.ok) {
+            const responseText = await webhookResponse.text();
+            console.log('n8n webhook success response:', responseText);
+            return true;
+          } else {
+            const errorText = await webhookResponse.text();
+            console.error('n8n webhook failed:', webhookResponse.status, 'Response:', errorText);
+            return false;
+          }
+        } catch (error) {
+          console.error('Webhook fetch error:', error);
+          return false;
         }
-      } catch (error) {
-        console.error('Background processing error for image:', imageId, error);
-        
-        // Update record to indicate processing failed
+      };
+
+      const updateProcessingStatus = async (status: 'started' | 'failed', error?: string) => {
+        const updateData: any = {
+          ...imageRecord.metadata,
+          webhook_triggered_at: new Date().toISOString()
+        };
+
+        if (status === 'started') {
+          updateData.processing_started = true;
+          updateData.processing_attempts = attempt + 1;
+        } else {
+          updateData.processing_failed = true;
+          updateData.processing_error = error || 'Unknown error';
+          updateData.failed_at = new Date().toISOString();
+        }
+
         await supabase
           .from('images')
-          .update({
-            metadata: {
-              ...imageRecord.metadata,
-              processing_failed: true,
-              processing_error: error.message,
-              failed_at: new Date().toISOString()
-            }
-          })
+          .update({ metadata: updateData })
           .eq('id', imageRecord.id);
+      };
+
+      // Retry loop
+      while (attempt < maxRetries) {
+        const success = await triggerWebhook();
+        
+        if (success) {
+          await updateProcessingStatus('started');
+          console.log('N8N webhook triggered successfully for image:', imageId);
+          return;
+        }
+
+        attempt++;
+        
+        if (attempt < maxRetries) {
+          console.log(`Waiting ${retryDelay}ms before retry ${attempt + 1}`);
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
+        }
       }
+
+      // All attempts failed
+      const errorMessage = `Failed to trigger n8n webhook after ${maxRetries} attempts`;
+      console.error(errorMessage);
+      await updateProcessingStatus('failed', errorMessage);
     };
 
     // Start the background task using EdgeRuntime.waitUntil

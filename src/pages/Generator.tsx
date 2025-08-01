@@ -2,15 +2,15 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
-import { Loader2, Upload, Image as ImageIcon, Settings, Zap, X, Trash2, User, LogOut } from "lucide-react";
+import { PremiumHeader } from "@/components/PremiumHeader";
+import { PremiumUploadArea } from "@/components/PremiumUploadArea";
+import { PremiumProcessingHistory } from "@/components/PremiumProcessingHistory";
+import { PremiumSettingsSidebar } from "@/components/PremiumSettingsSidebar";
+import { Loader2, Sparkles } from "lucide-react";
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useTokens } from "@/hooks/useTokens";
@@ -30,7 +30,7 @@ interface ProcessedImage {
 }
 
 export const Generator = () => {
-  const webhookUrl = "https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7";
+  const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL || "https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7";
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processedImages, setProcessedImages] = useState<ProcessedImage[]>([]);
@@ -197,16 +197,26 @@ export const Generator = () => {
           formData.append('userId', user?.id || '');
           formData.append('imageType', 'before');
 
+          console.log('Starting image processing for:', image.name);
+          console.log('User ID:', user?.id);
+          
           const response = await supabase.functions.invoke('process-image', {
             body: formData,
           });
 
+          console.log('Supabase response:', response);
+
           if (response.error) {
-            throw new Error(response.error.message);
+            console.error('Supabase function error:', response.error);
+            throw new Error(response.error.message || 'Failed to start image processing');
           }
 
           const result = response.data;
-          console.log('Image processing started:', result);
+          console.log('Image processing started successfully:', result);
+
+          if (!result || !result.db_record_id) {
+            throw new Error('Invalid response from processing service');
+          }
 
           // Update with the database record ID for tracking
           setProcessedImages(prev => prev.map(img => 
@@ -261,39 +271,78 @@ export const Generator = () => {
     }
   };
 
+  // Enhanced polling with adaptive intervals and better real-time updates
   const pollForCompletion = async (imageId: string, dbRecordId: string) => {
-    const maxPollingTime = 8 * 60 * 1000; // 8 minutes (increased from 5)
-    const pollingInterval = 15000; // 15 seconds (increased from 10)
+    const maxPollingTime = 8 * 60 * 1000; // 8 minutes (reduced from 10)
+    let pollingInterval = 8000; // Start with 8 seconds
+    const maxPollingInterval = 30000; // Max 30 seconds
+    const minPollingInterval = 3000; // Min 3 seconds
     const startTime = Date.now();
     let lastStatusUpdate = Date.now();
+    let lastProgressUpdate = Date.now();
     let consecutiveErrors = 0;
     const maxConsecutiveErrors = 3;
+    let processingStage = 0; // Track AI processing stages
+    
+    console.log(`Starting adaptive polling for image ${imageId}, db record ${dbRecordId}`);
 
-    // Enhanced status messages based on elapsed time
+    // AI processing stages with realistic timing
+    const processingStages = [
+      { duration: 60000, message: "Initializing AI processing..." },      // 0-60s
+      { duration: 90000, message: "Analyzing food image composition..." }, // 60-150s
+      { duration: 120000, message: "Generating enhancement prompts..." }, // 150-270s
+      { duration: 180000, message: "Processing with AI models..." },       // 270-450s
+      { duration: 30000, message: "Finalizing your enhanced image..." }   // 450-480s
+    ];
+
     const getStatusMessage = (elapsedMs: number) => {
-      const elapsedMinutes = Math.floor(elapsedMs / 60000);
-      const remainingMinutes = Math.max(0, Math.ceil((maxPollingTime - elapsedMs) / 60000));
-      
-      if (elapsedMinutes < 1) return "Initializing AI processing...";
-      if (elapsedMinutes < 2) return "Analyzing food image composition...";
-      if (elapsedMinutes < 3) return "Generating enhancement prompts...";
-      if (elapsedMinutes < 4) return "Processing with AI models...";
-      if (remainingMinutes > 2) return `Still processing... (~${remainingMinutes}min remaining)`;
+      let accumulatedTime = 0;
+      for (let i = 0; i < processingStages.length; i++) {
+        accumulatedTime += processingStages[i].duration;
+        if (elapsedMs < accumulatedTime) {
+          processingStage = i;
+          return processingStages[i].message;
+        }
+      }
       return "Finalizing your enhanced image...";
+    };
+
+    const getAdaptivePollingInterval = (elapsedMs: number, hasError: boolean) => {
+      // Increase polling interval over time to reduce server load
+      const elapsedMinutes = elapsedMs / 60000;
+      
+      if (hasError) {
+        return minPollingInterval; // Poll faster on errors
+      }
+      
+      if (elapsedMinutes < 2) return minPollingInterval;      // Fast polling initially
+      if (elapsedMinutes < 5) return 10000;                   // 10 seconds
+      if (elapsedMinutes < 7) return 15000;                   // 15 seconds
+      return maxPollingInterval;                              // Max 30 seconds
     };
 
     const updateProgressStatus = () => {
       const elapsed = Date.now() - startTime;
-      const progress = Math.min(100, Math.floor((elapsed / maxPollingTime) * 100));
+      const progress = Math.min(95, Math.floor((elapsed / maxPollingTime) * 100)); // Cap at 95%
       
-      // Update status message every 30 seconds
-      if (Date.now() - lastStatusUpdate > 30000) {
+      // Update status message every 20 seconds (more frequent)
+      if (Date.now() - lastStatusUpdate > 20000) {
         setProcessedImages(prev => prev.map(img => 
           img.id === imageId 
             ? { ...img, progressMessage: getStatusMessage(elapsed) }
             : img
         ));
         lastStatusUpdate = Date.now();
+      }
+      
+      // Update progress bar every 5 seconds
+      if (Date.now() - lastProgressUpdate > 5000) {
+        setProcessedImages(prev => prev.map(img => 
+          img.id === imageId 
+            ? { ...img, progress }
+            : img
+        ));
+        lastProgressUpdate = Date.now();
       }
       
       return { elapsed, progress };
@@ -312,16 +361,18 @@ export const Generator = () => {
           ));
           toast({
             title: "Processing timeout",
-            description: "Image processing took too long. This may be due to high demand. Please try again.",
+            description: "Image processing took longer than expected. This may be due to high demand. Please try again.",
             variant: "destructive",
           });
           return;
         }
 
         // Check the database for processing completion
+        console.log(`Checking status for db record ${dbRecordId}, attempt ${consecutiveErrors + 1}`);
+        
         const { data, error } = await supabase
           .from('images')
-          .select('metadata')
+          .select('metadata, created_at, updated_at')
           .eq('id', dbRecordId)
           .single();
 
@@ -330,36 +381,47 @@ export const Generator = () => {
           consecutiveErrors++;
           
           if (consecutiveErrors >= maxConsecutiveErrors) {
+            console.error(`Max consecutive errors reached for image ${imageId}`);
             setProcessedImages(prev => prev.map(img => 
               img.id === imageId 
-                ? { ...img, status: 'error' as const, progressMessage: "Connection error - please check your internet" }
+                ? { ...img, status: 'error' as const, progressMessage: "Connection error - please check your internet and try again" }
                 : img
             ));
             toast({
               title: "Connection error",
-              description: "Unable to check processing status. Please check your internet connection.",
+              description: "Unable to check processing status. Please check your internet connection and try again.",
               variant: "destructive",
             });
             return;
           }
           
+          // Use adaptive polling on errors
+          pollingInterval = getAdaptivePollingInterval(elapsed, true);
           setTimeout(poll, pollingInterval);
           return;
         }
 
         // Reset error counter on successful request
         consecutiveErrors = 0;
+        pollingInterval = getAdaptivePollingInterval(elapsed, false);
 
         const metadata = data.metadata as Record<string, unknown>;
         
-        if (metadata?.processing_completed && metadata?.enhanced_image_url) {
-          // Processing completed successfully - update with the enhanced image URL
+        if (!metadata) {
+          setTimeout(poll, pollingInterval);
+          return;
+        }
+        
+        if (metadata.processing_completed && metadata.enhanced_image_url) {
+          // Processing completed successfully
+          console.log(`Processing completed for ${imageId}, URL: ${metadata.enhanced_image_url}`);
           setProcessedImages(prev => prev.map(img => 
             img.id === imageId 
               ? { 
                   ...img, 
                   status: 'completed' as const,
-                  processedUrl: metadata.enhanced_image_url,
+                  processedUrl: metadata.enhanced_image_url as string,
+                  progress: 100,
                   progressMessage: "Enhancement complete!"
                 }
               : img
@@ -375,27 +437,39 @@ export const Generator = () => {
             getUserTokens(user.id).then(setUserTokens);
           }
           
-        } else if (metadata?.processing_failed) {
+        } else if (metadata.processing_failed) {
           // Processing failed
+          console.error(`Processing failed for ${imageId}:`, metadata.processing_error);
           setProcessedImages(prev => prev.map(img => 
             img.id === imageId 
-              ? { ...img, status: 'error' as const, progressMessage: "Processing failed" }
+              ? { ...img, status: 'error' as const, progressMessage: metadata.processing_error as string || "Processing failed" }
               : img
           ));
           
           toast({
             title: "Processing failed",
-            description: metadata?.processing_error || "Image processing failed. Please try again.",
+            description: metadata.processing_error as string || "Image processing failed. Please try again.",
             variant: "destructive",
           });
           
         } else {
-          // Still processing - update progress and continue polling
-          setProcessedImages(prev => prev.map(img => 
-            img.id === imageId 
-              ? { ...img, progress: progress, progressMessage: getStatusMessage(elapsed) }
-              : img
-          ));
+          // Still processing - check for n8n status updates
+          const n8nStatus = metadata.n8n_status || metadata.processing_status;
+          if (n8nStatus && typeof n8nStatus === 'string') {
+            // Use n8n status message if available
+            setProcessedImages(prev => prev.map(img => 
+              img.id === imageId 
+                ? { ...img, progressMessage: n8nStatus }
+                : img
+            ));
+          } else {
+            // Use our staged progress messages
+            setProcessedImages(prev => prev.map(img => 
+              img.id === imageId 
+                ? { ...img, progress, progressMessage: getStatusMessage(elapsed) }
+                : img
+            ));
+          }
           
           setTimeout(poll, pollingInterval);
         }
@@ -413,12 +487,13 @@ export const Generator = () => {
           return;
         }
         
+        pollingInterval = getAdaptivePollingInterval(Date.now() - startTime, true);
         setTimeout(poll, pollingInterval);
       }
     };
 
     // Start polling after a short delay
-    setTimeout(poll, 3000);
+    setTimeout(poll, 2000);
   };
 
   const getStatusColor = (status: ProcessedImage['status']) => {
@@ -558,45 +633,53 @@ export const Generator = () => {
   return (
     <div className="min-h-screen text-white relative overflow-hidden">
       <AnimatedBackground />
-      {/* Header */}
+      {/* Premium Header */}
       <header className="border-b border-white/10 bg-black/20 backdrop-blur-sm sticky top-0 z-50 relative">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <img src="/lovable-uploads/592c6a0e-acaf-4769-a4e1-d4b0a60ad014.png" alt="Foodio" className="h-8 w-auto" />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
+              <h1 className="text-2xl font-bold premium-gradient-text">Foodio</h1>
+            </div>
           </div>
           <div className="flex items-center gap-4">
-            <Badge variant="outline" className="border-primary/50 text-primary">
-              {userTokens} tokens
-            </Badge>
-            <Badge variant="secondary" className="gap-1">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+            <div className="premium-card px-4 py-2 rounded-lg border border-blue-500/30">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium text-blue-400">{userTokens} tokens</span>
+              </div>
+            </div>
+            <Badge variant="secondary" className="premium-card px-3 py-1 border border-green-500/30 text-green-400">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2" />
               Ready
             </Badge>
             
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full premium-card border border-white/20">
                     <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-primary/10 text-primary">
+                      <AvatarFallback className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white">
                         {user?.email?.charAt(0)?.toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+                <DropdownMenuContent className="w-56 glass-card" align="end" forceMount>
+                  <DropdownMenuItem onClick={() => navigate('/dashboard')} className="text-white hover:bg-white/10">
                     <User className="mr-2 h-4 w-4" />
                     Dashboard
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => {}} className="text-red-600">
+                  <DropdownMenuItem onClick={() => {}} className="text-red-400 hover:bg-red-500/20">
                     <LogOut className="mr-2 h-4 w-4" />
                     Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground" onClick={() => navigate('/signin')}>
+              <Button className="premium-button premium-gradient text-white px-6 py-2 rounded-lg" onClick={() => navigate('/signin')}>
                 Sign In
               </Button>
             )}
@@ -606,226 +689,61 @@ export const Generator = () => {
 
       <div className="container mx-auto px-4 py-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Upload Area */}
-          <div className="lg:col-span-2">
-            <Card className="mb-6">
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  <div>
-                    <Label>Upload Images</Label>
-                    <div 
-                      className="mt-2 border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-muted-foreground/50 transition-colors cursor-pointer"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <Upload className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                      <p className="text-lg font-medium">Drop images here or click to browse</p>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        Supports PNG, JPG, JPEG, WebP
-                      </p>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        onChange={handleImageSelect}
-                        className="hidden"
-                      />
-                    </div>
-                  </div>
+          {/* Main Content Area */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Hero Section */}
+            <div className="text-center mb-8">
+              <h2 className="text-4xl font-bold mb-4 premium-gradient-text">
+                Transform Your Food Photography
+              </h2>
+              <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+                Professional AI-powered enhancement for your food images. Make your dishes look irresistible with our advanced technology.
+              </p>
+            </div>
 
-                  {/* Selected Images Preview */}
-                  {selectedImages.length > 0 && (
-                    <div>
-                      <Label>Selected Images ({selectedImages.length})</Label>
-                      <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        {selectedImages.map((image, index) => (
-                          <div key={index} className="relative group">
-                            <div className="aspect-square bg-muted rounded-lg overflow-hidden">
-                              <img
-                                src={URL.createObjectURL(image)}
-                                alt={image.name}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            <button
-                              onClick={() => removeImage(index)}
-                              className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                            <p className="text-xs text-muted-foreground mt-1 truncate">
-                              {image.name}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
+            {/* Premium Upload Area */}
+            <PremiumUploadArea
+              onFileSelect={(files) => setSelectedImages(prev => [...prev, ...files])}
+              selectedImages={selectedImages}
+              onRemoveImage={removeImage}
+              isProcessing={isProcessing}
+              disabled={userTokens < selectedImages.length}
+            />
+
+            {/* Process Button (only if not handled in PremiumUploadArea) */}
+            {selectedImages.length > 0 && (
+              <div className="flex justify-center">
+                <Button 
+                  onClick={handleProcess}
+                  disabled={isProcessing || userTokens < selectedImages.length}
+                  className="premium-button premium-gradient text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-2xl hover:shadow-blue-500/25 transition-all duration-300"
+                >
+                  {isProcessing ? (
+                    <div className="flex items-center gap-3">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      Processing {selectedImages.length} image{selectedImages.length > 1 ? 's' : ''}...
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <Sparkles className="w-5 h-5" />
+                      Transform {selectedImages.length} image{selectedImages.length > 1 ? 's' : ''}
                     </div>
                   )}
-
-                  <Button 
-                    onClick={handleProcess} 
-                    disabled={isProcessing || selectedImages.length === 0}
-                    className="w-full h-12 text-lg font-medium"
-                    size="lg"
-                  >
-                    {isProcessing ? (
-                      <>
-                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        Processing {selectedImages.length} image(s)...
-                      </>
-                    ) : (
-                      <>
-                        Transform Images
-                        <Zap className="w-5 h-5 ml-2" />
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Processed Images History */}
-            {processedImages.length > 0 && (
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">Processing History</h3>
-                  <div className="space-y-4">
-                     {processedImages.map((image) => (
-                       <div key={image.id} className="p-4 border rounded-lg">
-                         <div className="flex items-center gap-4 mb-3">
-                           <div className="w-16 h-16 bg-muted rounded-lg overflow-hidden flex-shrink-0">
-                             <img
-                               src={image.originalUrl}
-                               alt={image.originalName}
-                               className="w-full h-full object-cover"
-                             />
-                           </div>
-                           <div className="flex-1 min-w-0">
-                             <p className="font-medium truncate">{image.originalName}</p>
-                             <p className="text-sm text-muted-foreground">
-                               {image.timestamp.toLocaleTimeString()}
-                             </p>
-                           </div>
-                            <div className="flex flex-col gap-2">
-                              <div className="flex items-center gap-2">
-                                <div className={`w-3 h-3 rounded-full ${getStatusColor(image.status)}`} />
-                                <span className="text-sm font-medium">{getStatusText(image.status)}</span>
-                                
-                                {/* Retry button for failed images */}
-                                {image.status === 'error' && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleRetryProcessing(image.id)}
-                                    className="ml-2 h-8 px-3 text-xs"
-                                  >
-                                    Retry
-                                  </Button>
-                                )}
-                                
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setDeleteImageId(image.id)}
-                                  className="ml-2 p-1 h-8 w-8"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                              
-                              {/* Progress indicator for processing images */}
-                              {image.status === 'processing' && (
-                                <div className="space-y-2">
-                                  {image.progress !== undefined && (
-                                    <div className="w-full bg-muted rounded-full h-2">
-                                      <div 
-                                        className="bg-blue-500 h-2 rounded-full transition-all duration-1000"
-                                        style={{ width: `${image.progress}%` }}
-                                      />
-                                    </div>
-                                  )}
-                                  {image.progressMessage && (
-                                    <p className="text-xs text-muted-foreground">
-                                      {image.progressMessage}
-                                    </p>
-                                  )}
-                                </div>
-                              )}
-                              
-                              {/* Error message for failed images */}
-                              {image.status === 'error' && image.progressMessage && (
-                                <p className="text-xs text-red-400">
-                                  {image.progressMessage}
-                                </p>
-                              )}
-                            </div>
-                         </div>
-                         
-                         {/* Show transformed image when completed */}
-                         {image.status === 'completed' && image.processedUrl && (
-                           <div className="mt-4">
-                             <Label className="text-sm font-medium text-green-600">Transformed Image:</Label>
-                             <div className="mt-2 w-full max-w-md bg-muted rounded-lg overflow-hidden">
-                               <img
-                                 src={image.processedUrl}
-                                 alt={`Transformed ${image.originalName}`}
-                                 className="w-full h-auto object-cover"
-                               />
-                             </div>
-                           </div>
-                         )}
-                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                </Button>
+              </div>
             )}
+
+            {/* Premium Processing History */}
+            <PremiumProcessingHistory
+              processedImages={processedImages}
+              onDeleteImage={handleDeleteImage}
+              onRetryProcessing={handleRetryProcessing}
+            />
           </div>
 
-          {/* Settings Sidebar */}
-          <div className="space-y-6">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Settings className="w-4 h-4" />
-                  <h3 className="font-semibold">Settings</h3>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="pt-4 border-t">
-                    <Label className="text-sm font-medium">Supported Formats</Label>
-                    <div className="mt-2 space-y-1">
-                      {['PNG', 'JPG', 'JPEG', 'WebP'].map((format) => (
-                        <div key={format} className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-green-500 rounded-full" />
-                          <span className="text-sm text-muted-foreground">{format}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="font-semibold mb-3">How it works</h3>
-                <div className="space-y-3 text-sm text-muted-foreground">
-                  <div className="flex gap-3">
-                    <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-bold">1</div>
-                    <p>Upload one or more images</p>
-                  </div>
-                  <div className="flex gap-3">
-                    <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-bold">2</div>
-                    <p>Click transform to process your images</p>
-                  </div>
-                  <div className="flex gap-3">
-                    <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-bold">3</div>
-                    <p>Get your transformed images back</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          {/* Premium Settings Sidebar */}
+          <div>
+            <PremiumSettingsSidebar />
           </div>
         </div>
       </div>
