@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ArrowRight, Camera, Sparkles, Upload, ImageIcon } from "lucide-react";
-
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 export const Home = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -104,8 +103,9 @@ export const Home = () => {
           <img src="/lovable-uploads/592c6a0e-acaf-4769-a4e1-d4b0a60ad014.png" alt="Foodio" className="h-10 w-auto" />
           
           <nav className="hidden md:flex items-center space-x-8">
-            <a href="#" className="text-muted-foreground hover:text-primary transition-colors font-medium">Community</a>
-            <a href="#" className="text-muted-foreground hover:text-primary transition-colors font-medium">Enterprise</a>
+            <a href="#" className="text-muted-foreground hover:text-primary transition-colors font-medium">How It Works
+          </a>
+            
             <a href="#" className="text-muted-foreground hover:text-primary transition-colors font-medium">Pricing</a>
             
             <Button variant="outline" className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground backdrop-blur-sm" onClick={() => navigate('/signin')}>
@@ -216,11 +216,7 @@ export const Home = () => {
                     <li>✓ 100% satisfaction guarantee</li>
                   </ul>
                   
-                  <Button 
-                    size="lg" 
-                    className="w-full px-8 py-4 text-lg font-semibold bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl mb-4" 
-                    onClick={() => navigate('/signup')}
-                  >
+                  <Button size="lg" className="w-full px-8 py-4 text-lg font-semibold bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl mb-4" onClick={() => navigate('/signup')}>
                     Get Started Today
                     <ArrowRight className="ml-3 h-6 w-6" />
                   </Button>
