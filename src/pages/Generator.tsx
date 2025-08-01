@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { useTokens } from "@/hooks/useTokens";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ProcessedImage {
@@ -23,6 +24,7 @@ interface ProcessedImage {
   processedUrl?: string;
   timestamp: Date;
   supabaseFileName?: string;
+  dbRecordId?: string;
 }
 
 export const Generator = () => {
@@ -34,7 +36,15 @@ export const Generator = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { getUserTokens } = useTokens();
   const navigate = useNavigate();
+  const [userTokens, setUserTokens] = useState<number>(0);
+
+  useEffect(() => {
+    if (user?.id) {
+      getUserTokens(user.id).then(setUserTokens);
+    }
+  }, [user?.id, getUserTokens]);
 
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -65,94 +75,64 @@ export const Generator = () => {
       return;
     }
 
+    // Check tokens before processing
+    if (userTokens < selectedImages.length) {
+      toast({
+        title: "Insufficient tokens",
+        description: `You need ${selectedImages.length} token(s) to process ${selectedImages.length} image(s). You have ${userTokens} tokens.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
       for (const image of selectedImages) {
-        // Upload image to Supabase storage first
-        const fileName = `${Date.now()}-${image.name}`;
-        
-        // Add to processing list
+        // Create a new processed image entry
         const newProcessedImage: ProcessedImage = {
-          id: Date.now().toString() + Math.random(),
+          id: crypto.randomUUID(),
           originalUrl: URL.createObjectURL(image),
           originalName: image.name,
           status: 'processing',
           timestamp: new Date(),
-          supabaseFileName: fileName,
         };
 
         setProcessedImages(prev => [newProcessedImage, ...prev]);
 
         try {
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('image-transformations')
-            .upload(fileName, image);
+          // Use the process-image function
+          const formData = new FormData();
+          formData.append('image', image);
+          formData.append('message', 'Transform this food image to make it look more appetizing');
+          formData.append('userId', user?.id || '');
+          formData.append('imageType', 'before');
 
-          if (uploadError) {
-            throw new Error(`Upload failed: ${uploadError.message}`);
+          const response = await supabase.functions.invoke('process-image', {
+            body: formData,
+          });
+
+          if (response.error) {
+            throw new Error(response.error.message);
           }
 
-          // Get the public URL
-          const { data: { publicUrl } } = supabase.storage
-            .from('image-transformations')
-            .getPublicUrl(fileName);
+          const result = response.data;
+          console.log('Image processing started:', result);
 
-          // Send the Supabase URL to your webhook with timeout handling
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-          
-          try {
-            const response = await fetch(webhookUrl, {
-              method: "POST",
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                imageUrl: publicUrl,
-                filename: image.name,
-                timestamp: new Date().toISOString(),
-              }),
-              signal: controller.signal,
-            });
+          // Update with the database record ID for tracking
+          setProcessedImages(prev => prev.map(img => 
+            img.id === newProcessedImage.id 
+              ? { 
+                  ...img, 
+                  supabaseFileName: result.file_path,
+                  processedUrl: result.image_url,
+                  dbRecordId: result.db_record_id
+                }
+              : img
+          ));
 
-            clearTimeout(timeoutId);
-
-            if (response.ok) {
-              const result = await response.text();
-              let processedUrl = result;
-              
-              // If the response is JSON, try to extract the URL
-              try {
-                const jsonResult = JSON.parse(result);
-                processedUrl = jsonResult.processedImageUrl || jsonResult.url || result;
-              } catch {
-                // Use the text response as the URL
-              }
-
-              // Update with the processed image URL
-              setProcessedImages(prev => prev.map(img => 
-                img.id === newProcessedImage.id 
-                  ? { ...img, status: 'completed' as const, processedUrl }
-                  : img
-              ));
-            } else {
-              throw new Error(`Webhook failed: ${response.status}`);
-            }
-          } catch (fetchError) {
-            clearTimeout(timeoutId);
-            if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-              // Webhook request timed out, but image is uploaded to Supabase
-              // Keep status as processing - the n8n workflow might still complete
-              console.log('Webhook request timed out, but processing may continue...');
-              toast({
-                title: "Processing started",
-                description: `Image "${image.name}" uploaded successfully. Processing may take 3-4 minutes.`,
-              });
-            } else {
-              throw fetchError;
-            }
-          }
+          // Start polling for completion
+          pollForCompletion(newProcessedImage.id, result.db_record_id);
 
         } catch (error) {
           console.error("Error processing image:", error);
@@ -161,12 +141,18 @@ export const Generator = () => {
               ? { ...img, status: 'error' as const }
               : img
           ));
+          
+          toast({
+            title: "Processing failed",
+            description: error instanceof Error ? error.message : "Failed to process image",
+            variant: "destructive",
+          });
         }
       }
 
       toast({
         title: "Images processing started",
-        description: `${selectedImages.length} image(s) uploaded and sent for transformation`,
+        description: `${selectedImages.length} image(s) uploaded and sent for transformation. Processing may take 3-4 minutes.`,
       });
 
       setSelectedImages([]);
@@ -184,6 +170,90 @@ export const Generator = () => {
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const pollForCompletion = async (imageId: string, dbRecordId: string) => {
+    const maxPollingTime = 5 * 60 * 1000; // 5 minutes
+    const pollingInterval = 10000; // 10 seconds
+    const startTime = Date.now();
+
+    const poll = async () => {
+      try {
+        // Check if we've exceeded max polling time
+        if (Date.now() - startTime > maxPollingTime) {
+          setProcessedImages(prev => prev.map(img => 
+            img.id === imageId 
+              ? { ...img, status: 'error' as const }
+              : img
+          ));
+          toast({
+            title: "Processing timeout",
+            description: "Image processing took too long and was marked as failed",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Check the database for processing completion
+        const { data, error } = await supabase
+          .from('images')
+          .select('metadata')
+          .eq('id', dbRecordId)
+          .single();
+
+        if (error) {
+          console.error('Error checking processing status:', error);
+          setTimeout(poll, pollingInterval);
+          return;
+        }
+
+        const metadata = data.metadata as any;
+        
+        if (metadata?.processing_completed) {
+          // Processing completed successfully
+          setProcessedImages(prev => prev.map(img => 
+            img.id === imageId 
+              ? { ...img, status: 'completed' as const }
+              : img
+          ));
+          
+          toast({
+            title: "Processing completed",
+            description: "Your image has been successfully enhanced!",
+          });
+          
+          // Refresh user tokens
+          if (user?.id) {
+            getUserTokens(user.id).then(setUserTokens);
+          }
+          
+        } else if (metadata?.processing_failed) {
+          // Processing failed
+          setProcessedImages(prev => prev.map(img => 
+            img.id === imageId 
+              ? { ...img, status: 'error' as const }
+              : img
+          ));
+          
+          toast({
+            title: "Processing failed",
+            description: metadata?.processing_error || "Image processing failed",
+            variant: "destructive",
+          });
+          
+        } else {
+          // Still processing, continue polling
+          setTimeout(poll, pollingInterval);
+        }
+
+      } catch (error) {
+        console.error('Error during polling:', error);
+        setTimeout(poll, pollingInterval);
+      }
+    };
+
+    // Start polling after a short delay
+    setTimeout(poll, 5000);
   };
 
   const getStatusColor = (status: ProcessedImage['status']) => {
@@ -258,6 +328,9 @@ export const Generator = () => {
             <img src="/lovable-uploads/19a613a5-687b-443f-9a7e-df9d77fbddf2.png" alt="Foodio" className="h-8 w-auto hidden dark:block" />
           </div>
           <div className="flex items-center gap-4">
+            <Badge variant="outline" className="border-primary/50 text-primary">
+              {userTokens} tokens
+            </Badge>
             <Badge variant="secondary" className="gap-1">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
               Ready
