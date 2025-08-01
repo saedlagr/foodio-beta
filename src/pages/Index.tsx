@@ -8,6 +8,7 @@ import { Send, Paperclip } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { useImageUpload } from "@/hooks/useImageUpload";
+import { CookingLoader } from "@/components/CookingLoader";
 
 interface Message {
   id: string;
@@ -51,23 +52,63 @@ const Index = () => {
           }
         }),
       })
-      .then(response => response.text())
-      .then(responseText => {
-        console.log('Initial response:', responseText);
-        let data;
-        try {
-          data = responseText ? JSON.parse(responseText) : {};
-        } catch (e) {
-          data = { message: responseText };
-        }
+      .then(async response => {
+        const contentType = response.headers.get('content-type');
         
-        const botMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          content: data.message || data.output || data.result || data.response || (responseText && responseText.trim() !== '' ? responseText : "Hello! I'm ready to help you with your food photos."),
-          isUser: false,
-          timestamp: new Date(),
-        };
-        setMessages(prev => [...prev, botMessage]);
+        if (contentType && contentType.includes('image/')) {
+          // Handle binary image response
+          const imageBlob = await response.blob();
+          const imageUrl = URL.createObjectURL(imageBlob);
+          
+          // Upload the processed image to our vector store as "after" image
+          try {
+            const imageFile = new File([imageBlob], `processed-${Date.now()}.png`, { type: 'image/png' });
+            const uploadResult = await uploadImage(imageFile, 'AI processed image', 'after');
+            
+            const botMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              content: uploadResult.success ? "Here's your enhanced image!" : "Image processed successfully!",
+              isUser: false,
+              timestamp: new Date(),
+              image: imageUrl,
+            };
+            setMessages(prev => [...prev, botMessage]);
+          } catch (uploadError) {
+            console.error('Error uploading processed image:', uploadError);
+            const botMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              content: "Here's your enhanced image!",
+              isUser: false,
+              timestamp: new Date(),
+              image: imageUrl,
+            };
+            setMessages(prev => [...prev, botMessage]);
+          }
+        } else {
+          // Handle text/JSON response
+          const responseText = await response.text();
+          console.log('Initial response:', responseText);
+          let data;
+          try {
+            data = responseText ? JSON.parse(responseText) : {};
+          } catch (e) {
+            data = { message: responseText };
+          }
+          
+          const messageContent = data.message || data.output || data.result || data.response || (responseText && responseText.trim() !== '' ? responseText : "Hello! I'm ready to help you with your food photos.");
+          
+          // Check if the message contains an image URL from tempfile.aiquickdraw.com
+          const imageUrlMatch = messageContent.match(/https:\/\/tempfile\.aiquickdraw\.com[^\s]*/);
+          
+          const botMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            content: imageUrlMatch ? "Here's your enhanced image!" : messageContent,
+            isUser: false,
+            timestamp: new Date(),
+            image: imageUrlMatch ? imageUrlMatch[0] : undefined,
+          };
+          setMessages(prev => [...prev, botMessage]);
+        }
       })
       .catch(error => {
         console.error('Error sending initial message:', error);
@@ -120,24 +161,121 @@ const Index = () => {
       console.log('Response ok:', response.ok);
 
       if (response.ok) {
-        const responseText = await response.text();
-        console.log('Raw response:', responseText);
+        const contentType = response.headers.get('content-type');
+        console.log('Content-Type:', contentType);
         
-        let data;
+        // Try to handle as binary image first, regardless of content-type
+        // because n8n might not set the correct content-type header
         try {
-          data = responseText ? JSON.parse(responseText) : {};
+          const responseClone = response.clone();
+          const responseText = await responseClone.text();
+          
+          // Check if it's a huge binary string (likely image data)
+          if (responseText.length > 10000 && !responseText.startsWith('{') && !responseText.startsWith('[')) {
+            console.log('Detected large binary response, treating as image');
+            
+            // Convert the response to blob and create image
+            const imageBlob = await response.blob();
+            const imageUrl = URL.createObjectURL(imageBlob);
+            
+            // Upload the processed image to our vector store as "after" image
+            try {
+              const imageFile = new File([imageBlob], `processed-${Date.now()}.png`, { type: 'image/png' });
+              const uploadResult = await uploadImage(imageFile, 'AI processed image', 'after');
+              
+              const botMessage: Message = {
+                id: (Date.now() + 1).toString(),
+                content: uploadResult.success ? "Here's your enhanced image!" : "Image processed successfully!",
+                isUser: false,
+                timestamp: new Date(),
+                image: imageUrl,
+              };
+              setMessages(prev => [...prev, botMessage]);
+            } catch (uploadError) {
+              console.error('Error uploading processed image:', uploadError);
+              const botMessage: Message = {
+                id: (Date.now() + 1).toString(),
+                content: "Here's your enhanced image!",
+                isUser: false,
+                timestamp: new Date(),
+                image: imageUrl,
+              };
+              setMessages(prev => [...prev, botMessage]);
+            }
+            return;
+          }
         } catch (e) {
-          console.log('Response is not JSON, using as plain text:', responseText);
-          data = { message: responseText };
+          console.log('Error checking for binary data:', e);
         }
-        
-        const botMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          content: data.message || data.output || data.result || responseText || "I received your message!",
-          isUser: false,
-          timestamp: new Date(),
-        };
-        setMessages(prev => [...prev, botMessage]);
+
+        if (contentType && contentType.includes('image/')) {
+          // Handle direct binary image response with proper content-type
+          const imageBlob = await response.blob();
+          const imageUrl = URL.createObjectURL(imageBlob);
+          
+          // Upload the processed image to our vector store as "after" image
+          try {
+            const imageFile = new File([imageBlob], `processed-${Date.now()}.png`, { type: 'image/png' });
+            const uploadResult = await uploadImage(imageFile, 'AI processed image', 'after');
+            
+            const botMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              content: uploadResult.success ? "Here's your enhanced image!" : "Image processed successfully!",
+              isUser: false,
+              timestamp: new Date(),
+              image: imageUrl,
+            };
+            setMessages(prev => [...prev, botMessage]);
+          } catch (uploadError) {
+            console.error('Error uploading processed image:', uploadError);
+            const botMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              content: "Here's your enhanced image!",
+              isUser: false,
+              timestamp: new Date(),
+              image: imageUrl,
+            };
+            setMessages(prev => [...prev, botMessage]);
+          }
+        } else {
+          // Handle text/JSON response
+          const responseText = await response.text();
+          console.log('Raw response length:', responseText.length);
+          
+          // Check if this is a Cloudflare error page
+          if (responseText.includes('<!DOCTYPE html>') && responseText.includes('timeout occurred')) {
+            const botMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              content: "The image processing service is currently experiencing high load. Please try again in a few moments. 🔄",
+              isUser: false,
+              timestamp: new Date(),
+            };
+            setMessages(prev => [...prev, botMessage]);
+            return;
+          }
+          
+          let data;
+          try {
+            data = responseText ? JSON.parse(responseText) : {};
+          } catch (e) {
+            console.log('Response is not JSON, using as plain text');
+            data = { message: responseText };
+          }
+          
+          const messageContent = data.message || data.output || data.result || responseText || "I received your message!";
+          
+          // Check if the message contains an image URL from tempfile.aiquickdraw.com
+          const imageUrlMatch = messageContent.match(/https:\/\/tempfile\.aiquickdraw\.com[^\s]*/);
+          
+          const botMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            content: imageUrlMatch ? "Here's your enhanced image!" : messageContent,
+            isUser: false,
+            timestamp: new Date(),
+            image: imageUrlMatch ? imageUrlMatch[0] : undefined,
+          };
+          setMessages(prev => [...prev, botMessage]);
+        }
       } else {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -171,8 +309,13 @@ const Index = () => {
       setMessages(prev => [...prev, fileMessage]);
 
       try {
-        // Upload using the hook
-        const result = await uploadImage(file, `Process this food image: ${file.name}`);
+        // Auto-detect image type based on filename or use 'before' as default
+        const imageType = file.name.toLowerCase().includes('after') || 
+                         file.name.toLowerCase().includes('enhanced') || 
+                         file.name.toLowerCase().includes('processed') ? 'after' : 'before';
+        
+        // Upload using the hook with auto-detected image type
+        const result = await uploadImage(file, `Process this ${imageType} food image: ${file.name}`, imageType);
         
         if (result.success) {
           const botMessage: Message = {
@@ -290,6 +433,9 @@ const Index = () => {
                 </div>
               </div>
             )}
+            
+            {/* Full-screen cooking loader for image processing */}
+            <CookingLoader isUploading={isUploading} />
           </div>
           
           {/* Input Section */}

@@ -32,6 +32,13 @@ serve(async (req) => {
     const imageFile = formData.get('image') as File;
     const message = formData.get('message') as string;
     const userId = formData.get('userId') as string;
+    const imageType = formData.get('imageType') as string || 'before'; // 'before' or 'after'
+    
+    // Auto-detect image type if not provided
+    const detectedType = imageFile.name.toLowerCase().includes('after') || 
+                        imageFile.name.toLowerCase().includes('enhanced') || 
+                        imageFile.name.toLowerCase().includes('processed') ? 'after' : 'before';
+    const finalImageType = imageType === 'before' ? detectedType : imageType;
 
     if (!imageFile) {
       return new Response(JSON.stringify({ error: 'No image file provided' }), {
@@ -81,9 +88,9 @@ serve(async (req) => {
       });
     }
 
-    // Generate unique filename
+    // Generate unique filename with folder structure for before/after
     const fileExt = imageFile.name.split('.').pop();
-    const fileName = `${user.id}/${crypto.randomUUID()}.${fileExt}`;
+    const fileName = `${user.id}/${finalImageType}/${crypto.randomUUID()}.${fileExt}`;
 
     console.log('Uploading to storage:', fileName);
 
@@ -105,10 +112,8 @@ serve(async (req) => {
 
     console.log('Image uploaded successfully:', uploadData.path);
 
-    // Convert image to base64 for OpenAI
-    const arrayBuffer = await imageFile.arrayBuffer();
-    const base64Image = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-    const mimeType = imageFile.type;
+    // Generate unique image ID for easy retrieval
+    const imageId = crypto.randomUUID();
 
     console.log('Generating embedding with OpenAI');
 
@@ -150,7 +155,10 @@ serve(async (req) => {
         metadata: {
           original_message: message,
           user_session: userId,
-          processed_at: new Date().toISOString()
+          processed_at: new Date().toISOString(),
+          image_type: finalImageType,
+          image_id: imageId,
+          folder: `${user.id}/${finalImageType}`
         }
       })
       .select()
@@ -184,13 +192,105 @@ serve(async (req) => {
       .from('food-images')
       .getPublicUrl(uploadData.path);
 
-    // Return success response
+    console.log('Sending image to chat agent for analysis');
+
+    // Get remaining tokens for response
+    const remainingTokens = profile.tokens - 1;
+
+    // Start background task for n8n processing without waiting
+    const backgroundProcessing = async () => {
+      try {
+        console.log('Starting background processing for image:', imageId);
+        
+        const webhookResponse = await fetch('https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            body: {
+              message: `New ${finalImageType} image uploaded: "${imageFile.name}". ${message || 'Please analyze this food image.'}`,
+              image_id: imageId,
+              image_url: publicURL.publicUrl,
+              image_type: finalImageType,
+              user_id: user.id,
+              folder_path: `${user.id}/${finalImageType}`,
+              db_record_id: imageRecord.id
+            }
+          }),
+        });
+
+        console.log('n8n webhook response status:', webhookResponse.status);
+        
+        if (webhookResponse.ok) {
+          const chatResponse = await webhookResponse.text();
+          console.log('n8n processing completed for image:', imageId);
+          
+          // Update the database record with the processing result if needed
+          try {
+            let processedMessage = "Image processed successfully!";
+            try {
+              const parsedResponse = JSON.parse(chatResponse);
+              processedMessage = parsedResponse.message || parsedResponse.output || parsedResponse.result || chatResponse || processedMessage;
+            } catch (e) {
+              processedMessage = chatResponse || processedMessage;
+            }
+
+            // Optional: Update the image record with processing results
+            await supabase
+              .from('images')
+              .update({
+                metadata: {
+                  ...imageRecord.metadata,
+                  processing_completed: true,
+                  processing_result: processedMessage,
+                  completed_at: new Date().toISOString()
+                }
+              })
+              .eq('id', imageRecord.id);
+              
+          } catch (updateError) {
+            console.error('Error updating image record:', updateError);
+          }
+        } else {
+          console.error('n8n webhook failed with status:', webhookResponse.status);
+        }
+      } catch (error) {
+        console.error('Background processing error for image:', imageId, error);
+        
+        // Update record to indicate processing failed
+        try {
+          await supabase
+            .from('images')
+            .update({
+              metadata: {
+                ...imageRecord.metadata,
+                processing_failed: true,
+                processing_error: error.message,
+                failed_at: new Date().toISOString()
+              }
+            })
+            .eq('id', imageRecord.id);
+        } catch (updateError) {
+          console.error('Error updating failed processing status:', updateError);
+        }
+      }
+    };
+
+    // Start the background task using EdgeRuntime.waitUntil
+    EdgeRuntime.waitUntil(backgroundProcessing());
+
+    // Return immediate response to prevent timeout
     return new Response(JSON.stringify({
       success: true,
-      message: `Image "${imageFile.name}" has been processed and stored successfully! I can now analyze and enhance your food photos. Your image is ready for AI processing.`,
-      image_id: imageRecord.id,
+      message: "Image uploaded successfully! AI processing has started in the background. You'll see the enhanced image when processing completes (usually 60-90 seconds).",
+      image_id: imageId,
+      db_record_id: imageRecord.id,
       image_url: publicURL.publicUrl,
-      tokens_remaining: profile.tokens - 1
+      image_type: finalImageType,
+      folder_path: `${user.id}/${finalImageType}`,
+      tokens_remaining: remainingTokens,
+      processing_status: "started"
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

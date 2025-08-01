@@ -15,15 +15,16 @@ export const useImageUpload = () => {
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
-  const uploadImage = async (file: File, message?: string): Promise<UploadResult> => {
+  const uploadImage = async (file: File, message?: string, imageType: 'before' | 'after' = 'before'): Promise<UploadResult> => {
     setIsUploading(true);
 
     try {
       // Create FormData
       const formData = new FormData();
       formData.append('image', file);
-      formData.append('message', message || `Process this food image: ${file.name}`);
+      formData.append('message', message || `Process this ${imageType} food image: ${file.name}`);
       formData.append('userId', 'user-session-' + Date.now());
+      formData.append('imageType', imageType);
 
       // Get auth token
       const { data: { session } } = await supabase.auth.getSession();
