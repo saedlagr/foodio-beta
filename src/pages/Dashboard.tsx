@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Plus, Camera, Upload, Star, Heart, Eye, Settings, LogOut, MapPin } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { ThemeToggle } from "@/components/ThemeToggle";
+
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { useAuth } from "@/hooks/useAuth";
 import { useTokens } from "@/hooks/useTokens";
@@ -76,7 +76,7 @@ export const Dashboard = () => {
             
             <div className="flex items-center space-x-4">
               
-              <ThemeToggle />
+              
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">

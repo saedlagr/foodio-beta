@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ArrowRight, Camera, Sparkles, Upload, ImageIcon } from "lucide-react";
-import { ThemeToggle } from "@/components/ThemeToggle";
+
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 export const Home = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -108,7 +108,7 @@ export const Home = () => {
             <a href="#" className="text-muted-foreground hover:text-primary transition-colors font-medium">Community</a>
             <a href="#" className="text-muted-foreground hover:text-primary transition-colors font-medium">Enterprise</a>
             <a href="#" className="text-muted-foreground hover:text-primary transition-colors font-medium">Pricing</a>
-            <ThemeToggle />
+            
             <Button variant="outline" className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground backdrop-blur-sm" onClick={() => navigate('/signin')}>
               Sign In / Sign Up
             </Button>

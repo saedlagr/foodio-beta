@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { Loader2, Upload, Image as ImageIcon, Settings, Zap, X, Trash2, User, LogOut } from "lucide-react";
-import { ThemeToggle } from "@/components/ThemeToggle";
+
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -262,7 +262,7 @@ export const Generator = () => {
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
               Ready
             </Badge>
-            <ThemeToggle />
+            
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

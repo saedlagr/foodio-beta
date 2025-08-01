@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Mail, Lock, Sparkles } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { ThemeToggle } from "@/components/ThemeToggle";
+
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -68,7 +68,7 @@ export const SignIn = () => {
           <img src="/lovable-uploads/19a613a5-687b-443f-9a7e-df9d77fbddf2.png" alt="Foodio" className="h-8 w-auto hidden dark:block" />
         </div>
         <div className="flex items-center space-x-4">
-          <ThemeToggle />
+          
           <Link to="/" className="flex items-center space-x-2 text-white hover:text-[#00CFCF] transition-colors">
             <ArrowLeft className="h-5 w-5" />
             <span className="font-medium">Back to Home</span>
