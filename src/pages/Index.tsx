@@ -322,72 +322,21 @@ const Index = () => {
         const result = await uploadImage(file, `Process this ${imageType} food image: ${file.name}`, imageType);
         
         if (result.success && result.db_record_id) {
-          // Now start the n8n webhook processing and wait for response
-          try {
-            const webhookResponse = await fetch('https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                body: {
-                  jobId: result.db_record_id,
-                  imageUrl: result.image_url,
-                  message: `Process this ${imageType} food image: ${file.name}`
-                }
-              }),
-            });
-
-            if (webhookResponse.ok) {
-              const contentType = webhookResponse.headers.get('content-type');
-              
-              if (contentType && contentType.includes('image/')) {
-                // Handle direct binary image response
-                const imageBlob = await webhookResponse.blob();
-                const enhancedImageUrl = URL.createObjectURL(imageBlob);
-                
-                // Show the enhanced image result
-                const botMessage: Message = {
-                  id: (Date.now() + 1).toString(),
-                  content: "Here's your enhanced image!",
-                  isUser: false,
-                  timestamp: new Date(),
-                  image: enhancedImageUrl,
-                };
-                setMessages(prev => [...prev, botMessage]);
-                setIsProcessing(false);
-              } else {
-                // Handle text/JSON response that might contain image URL
-                const responseText = await webhookResponse.text();
-                let data;
-                try {
-                  data = responseText ? JSON.parse(responseText) : {};
-                } catch (e) {
-                  data = { message: responseText };
-                }
-                
-                const messageContent = data.message || data.output || data.result || responseText || "Processing completed!";
-                
-                // Check if the message contains an image URL
-                const imageUrlMatch = messageContent.match(/https:\/\/[^\s]*/);
-                const enhancedImageUrl = imageUrlMatch ? imageUrlMatch[0] : undefined;
-                
-                const botMessage: Message = {
-                  id: (Date.now() + 1).toString(),
-                  content: enhancedImageUrl ? "Here's your enhanced image!" : messageContent,
-                  isUser: false,
-                  timestamp: new Date(),
-                  image: enhancedImageUrl,
-                };
-                setMessages(prev => [...prev, botMessage]);
-                setIsProcessing(false);
+          // Send the processing request to n8n (fire and forget)
+          fetch('https://sgxlabs.app.n8n.cloud/webhook/63fa615f-c551-4ab4-84d3-67cf6ea627d7', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              body: {
+                jobId: result.db_record_id,
+                imageUrl: result.image_url,
+                message: `Process this ${imageType} food image: ${file.name}`
               }
-            } else {
-              throw new Error(`Webhook error! status: ${webhookResponse.status}`);
-            }
-          } catch (webhookError) {
-            console.error('Error calling webhook:', webhookError);
-            
+            }),
+          }).catch(error => {
+            console.error('Error calling webhook:', error);
             const errorMessage: Message = {
               id: (Date.now() + 1).toString(),
               content: "Sorry, image processing failed. Please try again.",
@@ -396,7 +345,11 @@ const Index = () => {
             };
             setMessages(prev => [...prev, errorMessage]);
             setIsProcessing(false);
-          }
+          });
+
+          // Keep processing state active - will be updated when n8n calls back
+          // The processing state will remain until we get the actual result
+          
         } else {
           const errorMessage: Message = {
             id: (Date.now() + 1).toString(),
