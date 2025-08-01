@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Mail, Lock, Sparkles } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -58,9 +59,10 @@ export const SignIn = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center p-4">
+    <div className="min-h-screen text-white relative overflow-hidden flex items-center justify-center p-4">
+      <AnimatedBackground />
       {/* Header */}
-      <div className="absolute top-6 left-6 right-6 flex justify-between items-center">
+      <div className="absolute top-6 left-6 right-6 flex justify-between items-center z-20">
         <Link to="/" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
           <ArrowLeft className="h-5 w-5" />
           <span className="font-medium">Back to Home</span>
@@ -68,8 +70,8 @@ export const SignIn = () => {
         <ThemeToggle />
       </div>
 
-      <div className="w-full max-w-md">
-        <Card className="shadow-2xl border-0 bg-background/80 backdrop-blur-sm">
+      <div className="w-full max-w-md relative z-10">
+        <Card className="shadow-2xl border-0 bg-black/40 backdrop-blur-sm border border-white/10">
           <CardHeader className="text-center space-y-4">
             <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center">
               <Sparkles className="h-8 w-8 text-primary" />
