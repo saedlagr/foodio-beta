@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { CookingLoader } from "@/components/CookingLoader";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Message {
   id: string;
@@ -24,6 +25,8 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
   const { uploadImage, isUploading } = useImageUpload();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const location = useLocation();
 
@@ -439,9 +442,12 @@ const Index = () => {
           <img src="/lovable-uploads/fae6ccf8-cbb0-42c9-bb05-8b5112d87509.png" alt="Foodio" className="h-8 w-auto dark:hidden" />
           <img src="/lovable-uploads/19a613a5-687b-443f-9a7e-df9d77fbddf2.png" alt="Foodio" className="h-8 w-auto hidden dark:block" />
           <div className="flex items-center gap-4">
-            <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-orange-400 bg-clip-text text-transparent">
-              Foodio AI
-            </h1>
+            <button 
+              onClick={() => navigate('/dashboard')}
+              className="text-xl font-semibold bg-gradient-to-r from-primary to-orange-400 bg-clip-text text-transparent hover:from-orange-400 hover:to-primary transition-all duration-300 cursor-pointer"
+            >
+              {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Dashboard'}
+            </button>
             <ThemeToggle />
           </div>
         </header>
