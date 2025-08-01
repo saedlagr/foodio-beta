@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload, Image as ImageIcon, Settings, Zap, X } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProcessedImage {
   id: string;
@@ -58,11 +59,6 @@ export const Generator = () => {
 
     try {
       for (const image of selectedImages) {
-        const formData = new FormData();
-        formData.append('image', image);
-        formData.append('timestamp', new Date().toISOString());
-        formData.append('filename', image.name);
-
         // Add to processing list
         const newProcessedImage: ProcessedImage = {
           id: Date.now().toString() + Math.random(),
@@ -75,21 +71,58 @@ export const Generator = () => {
         setProcessedImages(prev => [newProcessedImage, ...prev]);
 
         try {
+          // Upload image to Supabase storage first
+          const fileName = `${Date.now()}-${image.name}`;
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('image-transformations')
+            .upload(fileName, image);
+
+          if (uploadError) {
+            throw new Error(`Upload failed: ${uploadError.message}`);
+          }
+
+          // Get the public URL
+          const { data: { publicUrl } } = supabase.storage
+            .from('image-transformations')
+            .getPublicUrl(fileName);
+
+          // Send the Supabase URL to your webhook
           const response = await fetch(webhookUrl, {
             method: "POST",
-            body: formData,
-            mode: "no-cors",
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              imageUrl: publicUrl,
+              filename: image.name,
+              timestamp: new Date().toISOString(),
+            }),
           });
 
-          // Update status to completed (we can't get actual response due to no-cors)
-          setProcessedImages(prev => prev.map(img => 
-            img.id === newProcessedImage.id 
-              ? { ...img, status: 'completed' as const }
-              : img
-          ));
+          if (response.ok) {
+            const result = await response.text();
+            let processedUrl = result;
+            
+            // If the response is JSON, try to extract the URL
+            try {
+              const jsonResult = JSON.parse(result);
+              processedUrl = jsonResult.processedImageUrl || jsonResult.url || result;
+            } catch {
+              // Use the text response as the URL
+            }
+
+            // Update with the processed image URL
+            setProcessedImages(prev => prev.map(img => 
+              img.id === newProcessedImage.id 
+                ? { ...img, status: 'completed' as const, processedUrl }
+                : img
+            ));
+          } else {
+            throw new Error(`Webhook failed: ${response.status}`);
+          }
 
         } catch (error) {
-          console.error("Error sending image:", error);
+          console.error("Error processing image:", error);
           setProcessedImages(prev => prev.map(img => 
             img.id === newProcessedImage.id 
               ? { ...img, status: 'error' as const }
@@ -99,8 +132,8 @@ export const Generator = () => {
       }
 
       toast({
-        title: "Images sent for processing",
-        description: `${selectedImages.length} image(s) sent to your n8n webhook`,
+        title: "Images processing started",
+        description: `${selectedImages.length} image(s) uploaded and sent for transformation`,
       });
 
       setSelectedImages([]);
@@ -112,7 +145,7 @@ export const Generator = () => {
       console.error("Error processing images:", error);
       toast({
         title: "Processing failed",
-        description: "Failed to send images to webhook",
+        description: "Failed to process images",
         variant: "destructive",
       });
     } finally {
@@ -138,7 +171,7 @@ export const Generator = () => {
       case 'processing':
         return 'Processing...';
       case 'completed':
-        return 'Sent to webhook';
+        return 'Transformed';
       case 'error':
         return 'Failed';
       default:
@@ -253,26 +286,42 @@ export const Generator = () => {
                 <CardContent className="p-6">
                   <h3 className="text-lg font-semibold mb-4">Processing History</h3>
                   <div className="space-y-4">
-                    {processedImages.map((image) => (
-                      <div key={image.id} className="flex items-center gap-4 p-4 border rounded-lg">
-                        <div className="w-16 h-16 bg-muted rounded-lg overflow-hidden flex-shrink-0">
-                          <img
-                            src={image.originalUrl}
-                            alt={image.originalName}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{image.originalName}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {image.timestamp.toLocaleTimeString()}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className={`w-3 h-3 rounded-full ${getStatusColor(image.status)}`} />
-                          <span className="text-sm font-medium">{getStatusText(image.status)}</span>
-                        </div>
-                      </div>
+                     {processedImages.map((image) => (
+                       <div key={image.id} className="p-4 border rounded-lg">
+                         <div className="flex items-center gap-4 mb-3">
+                           <div className="w-16 h-16 bg-muted rounded-lg overflow-hidden flex-shrink-0">
+                             <img
+                               src={image.originalUrl}
+                               alt={image.originalName}
+                               className="w-full h-full object-cover"
+                             />
+                           </div>
+                           <div className="flex-1 min-w-0">
+                             <p className="font-medium truncate">{image.originalName}</p>
+                             <p className="text-sm text-muted-foreground">
+                               {image.timestamp.toLocaleTimeString()}
+                             </p>
+                           </div>
+                           <div className="flex items-center gap-2">
+                             <div className={`w-3 h-3 rounded-full ${getStatusColor(image.status)}`} />
+                             <span className="text-sm font-medium">{getStatusText(image.status)}</span>
+                           </div>
+                         </div>
+                         
+                         {/* Show transformed image when completed */}
+                         {image.status === 'completed' && image.processedUrl && (
+                           <div className="mt-4">
+                             <Label className="text-sm font-medium text-green-600">Transformed Image:</Label>
+                             <div className="mt-2 w-full max-w-md bg-muted rounded-lg overflow-hidden">
+                               <img
+                                 src={image.processedUrl}
+                                 alt={`Transformed ${image.originalName}`}
+                                 className="w-full h-auto object-cover"
+                               />
+                             </div>
+                           </div>
+                         )}
+                       </div>
                     ))}
                   </div>
                 </CardContent>
