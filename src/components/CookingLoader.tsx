@@ -28,20 +28,20 @@ const cookingPuns = [
   "Perfecting the presentation..."
 ];
 
-// 2-minute (120 seconds) cooking process with proper culinary order
+// 2.5-minute (150 seconds) cooking process with proper culinary order
 const cookingSteps = [
   { 
     icon: ChefHat, 
     title: "Prep Work", 
     pun: "Chopping pixels to perfection...", 
-    duration: 15000, // 15 seconds
+    duration: 20000, // 20 seconds
     description: "Preparing ingredients"
   },
   { 
     icon: Sparkles, 
     title: "Seasoning", 
     pun: "Sprinkling AI magic seasoning...", 
-    duration: 15000, // 15 seconds
+    duration: 20000, // 20 seconds
     description: "Seasoning before cooking"
   },
   { 
@@ -55,28 +55,28 @@ const cookingSteps = [
     icon: Utensils, 
     title: "Cooking", 
     pun: "Searing in those delicious details...", 
-    duration: 50000, // 50 seconds - main cooking phase
+    duration: 60000, // 60 seconds - main cooking phase
     description: "The main cooking process"
   },
   { 
     icon: Clock, 
     title: "Resting", 
     pun: "Letting it rest like a fine steak...", 
-    duration: 15000, // 15 seconds
+    duration: 20000, // 20 seconds
     description: "Letting flavors settle"
   },
   { 
     icon: Eye, 
     title: "Garnishing", 
     pun: "Adding the finishing touches...", 
-    duration: 7000, // 7 seconds
+    duration: 10000, // 10 seconds
     description: "Final artistic touches"
   },
   { 
     icon: CheckCircle2, 
     title: "Plating", 
     pun: "Bon appétit! Your masterpiece is served...", 
-    duration: 3000, // 3 seconds
+    duration: 5000, // 5 seconds
     description: "Ready to serve!"
   }
 ];
@@ -295,12 +295,24 @@ export const CookingLoader = ({ isUploading }: { isUploading: boolean }) => {
         </div>
 
         {/* Current Step Pun */}
-        <div className="text-center">
+        <div className="text-center mb-6">
           <p className="text-primary font-medium animate-fade-in" key={currentPun}>
             {currentStepData.pun}
           </p>
           <p className="text-xs text-muted-foreground mt-2" key={`pun-${currentPun}`}>
             {cookingPuns[currentPun]}
+          </p>
+        </div>
+
+        {/* Dashboard Option */}
+        <div className="bg-card/50 border border-border rounded-xl p-4 text-center">
+          <p className="text-sm text-muted-foreground mb-2">
+            ⏰ <strong>Want to step away?</strong> Feel free to close this tab!
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Your enhanced image will be waiting in your <strong>Dashboard</strong> when ready.
+            <br />
+            <span className="text-primary">Perfect for multitasking while we cook! 👨‍🍳</span>
           </p>
         </div>
 

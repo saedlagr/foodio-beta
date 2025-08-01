@@ -387,7 +387,7 @@ const Index = () => {
                 };
                 setMessages(prev => [...prev, completionMessage]);
               }
-            }, 120000); // 2 minutes = 120,000ms
+            }, 150000); // 2.5 minutes = 150,000ms
           }
           
           const botMessage: Message = {
@@ -438,10 +438,20 @@ const Index = () => {
         <header className="flex justify-between items-center p-6 backdrop-blur-sm border-b border-border">
           <img src="/lovable-uploads/fae6ccf8-cbb0-42c9-bb05-8b5112d87509.png" alt="Foodio" className="h-8 w-auto dark:hidden" />
           <img src="/lovable-uploads/19a613a5-687b-443f-9a7e-df9d77fbddf2.png" alt="Foodio" className="h-8 w-auto hidden dark:block" />
-          <div className="flex items-center gap-4">
-            <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-orange-400 bg-clip-text text-transparent">
-              Foodio AI
+          
+          <div className="flex-1 text-center mx-8">
+            <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-orange-400 bg-clip-text text-transparent mb-1">
+              Foodio AI - Professional Food Photography
             </h1>
+            <div className="text-xs text-muted-foreground space-x-4">
+              <span>🏆 Award-Winning AI Technology</span>
+              <span>⚡ 90% Enhancement Success Rate</span>
+              <span>🔒 Secure & Private Processing</span>
+              <span>👨‍🍳 Professional Chef-Level Results</span>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4">
             <ThemeToggle />
           </div>
         </header>
