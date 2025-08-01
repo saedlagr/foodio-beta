@@ -47,7 +47,7 @@ const Index = () => {
         },
         (payload) => {
           console.log('Processing job updated:', payload);
-          if (payload.new.status === 'completed' && payload.new.result_url) {
+          if (payload.new.status === 'completed' && payload.new.enhanced_image_url) {
             setIsProcessingImage(false);
             setCurrentProcessingJobId(null);
             
@@ -57,9 +57,29 @@ const Index = () => {
               content: "🎉 Your AI-enhanced masterpiece is ready!",
               isUser: false,
               timestamp: new Date(),
-              image: payload.new.result_url,
+              image: payload.new.enhanced_image_url,
             };
             setMessages(prev => [...prev, enhancedImageMessage]);
+            
+            // Optional: Show browser notification if user isn't focused
+            if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+              new Notification('Your enhanced image is ready!', {
+                body: 'Click to view your AI-enhanced photo',
+                icon: '/lovable-uploads/fae6ccf8-cbb0-42c9-bb05-8b5112d87509.png'
+              });
+            }
+          } else if (payload.new.status === 'failed') {
+            setIsProcessingImage(false);
+            setCurrentProcessingJobId(null);
+            
+            // Add error message to chat
+            const errorMessage: Message = {
+              id: (Date.now() + 3).toString(),
+              content: `❌ Processing failed: ${payload.new.error_message || 'Unknown error occurred'}`,
+              isUser: false,
+              timestamp: new Date(),
+            };
+            setMessages(prev => [...prev, errorMessage]);
           }
         }
       )
@@ -380,9 +400,8 @@ const Index = () => {
                 .from('processing_jobs')
                 .insert({
                   user_id: user?.id,
-                  image_id: result.image_id || result.db_record_id,
-                  status: 'processing',
-                  created_at: new Date().toISOString()
+                  original_image_id: result.image_id!,
+                  status: 'processing'
                 })
                 .select()
                 .single();
