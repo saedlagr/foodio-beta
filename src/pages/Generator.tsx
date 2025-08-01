@@ -324,8 +324,7 @@ export const Generator = () => {
       <header className="border-b border-white/10 bg-black/20 backdrop-blur-sm sticky top-0 z-50 relative">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <img src="/lovable-uploads/fae6ccf8-cbb0-42c9-bb05-8b5112d87509.png" alt="Foodio" className="h-8 w-auto dark:hidden" />
-            <img src="/lovable-uploads/19a613a5-687b-443f-9a7e-df9d77fbddf2.png" alt="Foodio" className="h-8 w-auto hidden dark:block" />
+            <img src="/lovable-uploads/592c6a0e-acaf-4769-a4e1-d4b0a60ad014.png" alt="Foodio" className="h-8 w-auto" />
           </div>
           <div className="flex items-center gap-4">
             <Badge variant="outline" className="border-primary/50 text-primary">
@@ -359,7 +358,7 @@ export const Generator = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button variant="outline" className="border-[#00CFCF] text-[#00CFCF] hover:bg-[#00CFCF] hover:text-black" onClick={() => navigate('/signin')}>
+              <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground" onClick={() => navigate('/signin')}>
                 Sign In
               </Button>
             )}

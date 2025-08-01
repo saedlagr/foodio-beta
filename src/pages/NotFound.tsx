@@ -19,10 +19,9 @@ const NotFound = () => {
       {/* Header */}
       <header className="absolute top-6 left-6 right-6 flex justify-between items-center z-20">
         <div className="flex items-center space-x-4">
-          <img src="/lovable-uploads/fae6ccf8-cbb0-42c9-bb05-8b5112d87509.png" alt="Foodio" className="h-8 w-auto dark:hidden" />
-          <img src="/lovable-uploads/19a613a5-687b-443f-9a7e-df9d77fbddf2.png" alt="Foodio" className="h-8 w-auto hidden dark:block" />
+          <img src="/lovable-uploads/592c6a0e-acaf-4769-a4e1-d4b0a60ad014.png" alt="Foodio" className="h-8 w-auto" />
         </div>
-        <a href="/" className="text-[#00CFCF] hover:text-[#00B8B8] underline font-medium">
+        <a href="/" className="text-primary hover:text-primary/80 underline font-medium">
           Back to Home
         </a>
       </header>
