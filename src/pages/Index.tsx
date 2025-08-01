@@ -29,22 +29,22 @@ const Index = () => {
       
       for (const image of processingImages) {
         try {
-          // Check if the processing is complete by querying the database
+          // Check if the processing is complete by querying the processing_jobs table
           const { data, error } = await supabase
-            .from('processed_images')
+            .from('processing_jobs' as any)
             .select('*')
             .eq('id', image.id)
-            .single();
+            .maybeSingle();
 
-          if (data && data.enhanced_image_url && data.status === 'completed') {
+          if (data && (data as any).enhanced_image_url && (data as any).status === 'completed') {
             setProcessedImages(prev => 
               prev.map(img => 
                 img.id === image.id 
-                  ? { ...img, enhancedUrl: data.enhanced_image_url, status: 'completed' }
+                  ? { ...img, enhancedUrl: (data as any).enhanced_image_url, status: 'completed' }
                   : img
               )
             );
-          } else if (data && data.status === 'failed') {
+          } else if (data && (data as any).status === 'failed') {
             setProcessedImages(prev => 
               prev.map(img => 
                 img.id === image.id 
@@ -323,7 +323,7 @@ const Index = () => {
                         <div className="aspect-square rounded-lg overflow-hidden bg-muted relative">
                           {image.status === 'processing' && (
                             <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-                              <CookingLoader />
+                              <CookingLoader isUploading={true} />
                             </div>
                           )}
                           {image.enhancedUrl ? (
