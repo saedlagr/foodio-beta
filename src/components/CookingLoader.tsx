@@ -28,7 +28,7 @@ const cookingPuns = [
   "Perfecting the presentation..."
 ];
 
-// 2-minute (120 seconds) cooking process with specific timings
+// 2-minute (120 seconds) cooking process with proper culinary order
 const cookingSteps = [
   { 
     icon: ChefHat, 
@@ -38,46 +38,46 @@ const cookingSteps = [
     description: "Preparing ingredients"
   },
   { 
+    icon: Sparkles, 
+    title: "Seasoning", 
+    pun: "Sprinkling AI magic seasoning...", 
+    duration: 15000, // 15 seconds
+    description: "Seasoning before cooking"
+  },
+  { 
     icon: Flame, 
     title: "Heating Up", 
     pun: "Firing up the AI ovens...", 
     duration: 15000, // 15 seconds
-    description: "Getting everything ready"
+    description: "Getting the pan ready"
   },
   { 
     icon: Utensils, 
     title: "Cooking", 
     pun: "Searing in those delicious details...", 
-    duration: 40000, // 40 seconds - main cooking phase
+    duration: 50000, // 50 seconds - main cooking phase
     description: "The main cooking process"
   },
   { 
-    icon: Sparkles, 
-    title: "Seasoning", 
-    pun: "Sprinkling AI magic seasoning...", 
-    duration: 25000, // 25 seconds
-    description: "Adding flavor enhancements"
-  },
-  { 
     icon: Clock, 
-    title: "Simmering", 
-    pun: "Slow cooking for perfection...", 
+    title: "Resting", 
+    pun: "Letting it rest like a fine steak...", 
     duration: 15000, // 15 seconds
-    description: "Letting flavors blend"
+    description: "Letting flavors settle"
   },
   { 
     icon: Eye, 
-    title: "Plating", 
-    pun: "Arranging your visual masterpiece...", 
+    title: "Garnishing", 
+    pun: "Adding the finishing touches...", 
     duration: 7000, // 7 seconds
-    description: "Final presentation"
+    description: "Final artistic touches"
   },
   { 
     icon: CheckCircle2, 
-    title: "Ready!", 
+    title: "Plating", 
     pun: "Bon appétit! Your masterpiece is served...", 
     duration: 3000, // 3 seconds
-    description: "Perfect timing guaranteed!"
+    description: "Ready to serve!"
   }
 ];
 
