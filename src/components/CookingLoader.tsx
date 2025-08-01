@@ -15,7 +15,17 @@ const cookingPuns = [
   "Marinating in creativity...",
   "Dicing up the competition...",
   "Stirring in some love...",
-  "Basting with brilliance..."
+  "Basting with brilliance...",
+  "Slow cooking for the best results...",
+  "Patience makes the perfect dish...",
+  "Great food takes time...",
+  "Tenderizing every pixel...",
+  "Infusing flavors slowly...",
+  "Creating a work of art...",
+  "Almost ready to serve...",
+  "Fine-tuning the recipe...",
+  "Adding the secret sauce...",
+  "Perfecting the presentation..."
 ];
 
 const cookingSteps = [
