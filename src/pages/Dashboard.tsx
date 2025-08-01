@@ -12,15 +12,18 @@ import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { useAuth } from "@/hooks/useAuth";
 import { useTokens } from "@/hooks/useTokens";
 import { supabase } from "@/integrations/supabase/client";
-
 export const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
-  const { getUserTokens } = useTokens();
+  const {
+    user,
+    signOut
+  } = useAuth();
+  const {
+    getUserTokens
+  } = useTokens();
   const [profile, setProfile] = useState<any>(null);
   const [tokens, setTokens] = useState<number>(0);
   const [images, setImages] = useState<any[]>([]);
-
   useEffect(() => {
     if (user) {
       fetchProfile();
@@ -28,47 +31,33 @@ export const Dashboard = () => {
       fetchImages();
     }
   }, [user]);
-
   const fetchProfile = async () => {
     if (!user) return;
-    
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', user.id)
-      .maybeSingle();
-    
+    const {
+      data
+    } = await supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle();
     setProfile(data);
   };
-
   const fetchTokens = async () => {
     if (!user) return;
-    
     const tokenCount = await getUserTokens(user.id);
     setTokens(tokenCount);
   };
-
   const fetchImages = async () => {
     if (!user) return;
-    
-    const { data } = await supabase
-      .from('images')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-    
+    const {
+      data
+    } = await supabase.from('images').select('*').eq('user_id', user.id).order('created_at', {
+      ascending: false
+    });
     setImages(data || []);
   };
-
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
   };
-
   const photoCount = images.length;
-
-  return (
-    <div className="min-h-screen text-white relative overflow-hidden">
+  return <div className="min-h-screen text-white relative overflow-hidden">
       <AnimatedBackground />
       {/* Header */}
       <header className="border-b border-white/10 bg-black/20 backdrop-blur-sm sticky top-0 z-50 relative">
@@ -86,13 +75,7 @@ export const Dashboard = () => {
             </div>
             
             <div className="flex items-center space-x-4">
-              <Button 
-                size="sm" 
-                className="bg-primary hover:bg-primary/90"
-              >
-                <Upload className="mr-2 h-4 w-4" />
-                Upload
-              </Button>
+              
               <ThemeToggle />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -213,8 +196,7 @@ export const Dashboard = () => {
         </div>
 
         {/* Portfolio Grid */}
-        {photoCount === 0 ? (
-          <div className="text-center py-20">
+        {photoCount === 0 ? <div className="text-center py-20">
             <div className="w-32 h-32 bg-gradient-to-br from-primary/20 to-primary/5 rounded-full flex items-center justify-center mx-auto mb-8">
               <Camera className="h-16 w-16 text-primary/60" />
             </div>
@@ -222,24 +204,14 @@ export const Dashboard = () => {
             <p className="text-muted-foreground mb-8 max-w-md mx-auto text-lg">
               Upload your first food photo and watch AI transform it into something spectacular.
             </p>
-            <Button 
-              size="lg" 
-              className="bg-primary hover:bg-primary/90 text-lg px-8 py-6"
-            >
+            <Button size="lg" className="bg-primary hover:bg-primary/90 text-lg px-8 py-6">
               <Upload className="mr-2 h-5 w-5" />
               Upload Your First Photo
             </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {images.map((image) => (
-              <Card key={image.id} className="group overflow-hidden hover-scale cursor-pointer">
+          </div> : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {images.map(image => <Card key={image.id} className="group overflow-hidden hover-scale cursor-pointer">
                 <div className="aspect-square relative overflow-hidden">
-                  <img 
-                    src={image.file_path} 
-                    alt={image.description || "Food image"} 
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
+                  <img src={image.file_path} alt={image.description || "Food image"} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
                   <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <div className="flex gap-2">
@@ -275,11 +247,8 @@ export const Dashboard = () => {
                     </Badge>
                   </div>
                 </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+              </Card>)}
+          </div>}
       </div>
-    </div>
-  );
+    </div>;
 };
