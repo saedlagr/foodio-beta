@@ -22,6 +22,7 @@ const Index = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
   const { uploadImage, isUploading } = useImageUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const location = useLocation();
@@ -318,6 +319,17 @@ const Index = () => {
         const result = await uploadImage(file, `Process this ${imageType} food image: ${file.name}`, imageType);
         
         if (result.success) {
+          // Check if this indicates background processing has started
+          if (result.message.includes("background") || result.message.includes("processing")) {
+            // Start the 2-minute cooking animation
+            setIsProcessingImage(true);
+            
+            // Set timer to stop the animation after 2 minutes
+            setTimeout(() => {
+              setIsProcessingImage(false);
+            }, 120000); // 2 minutes = 120,000ms
+          }
+          
           const botMessage: Message = {
             id: (Date.now() + 1).toString(),
             content: result.message,
@@ -435,7 +447,7 @@ const Index = () => {
             )}
             
             {/* Full-screen cooking loader for image processing */}
-            <CookingLoader isUploading={isUploading} />
+            <CookingLoader isUploading={isProcessingImage} />
           </div>
           
           {/* Input Section */}
