@@ -94,11 +94,17 @@ const Index = () => {
             data = { message: responseText };
           }
           
+          const messageContent = data.message || data.output || data.result || data.response || (responseText && responseText.trim() !== '' ? responseText : "Hello! I'm ready to help you with your food photos.");
+          
+          // Check if the message contains an image URL from tempfile.aiquickdraw.com
+          const imageUrlMatch = messageContent.match(/https:\/\/tempfile\.aiquickdraw\.com[^\s]*/);
+          
           const botMessage: Message = {
             id: (Date.now() + 1).toString(),
-            content: data.message || data.output || data.result || data.response || (responseText && responseText.trim() !== '' ? responseText : "Hello! I'm ready to help you with your food photos."),
+            content: imageUrlMatch ? "Here's your enhanced image!" : messageContent,
             isUser: false,
             timestamp: new Date(),
+            image: imageUrlMatch ? imageUrlMatch[0] : undefined,
           };
           setMessages(prev => [...prev, botMessage]);
         }
@@ -243,11 +249,17 @@ const Index = () => {
             data = { message: responseText };
           }
           
+          const messageContent = data.message || data.output || data.result || responseText || "I received your message!";
+          
+          // Check if the message contains an image URL from tempfile.aiquickdraw.com
+          const imageUrlMatch = messageContent.match(/https:\/\/tempfile\.aiquickdraw\.com[^\s]*/);
+          
           const botMessage: Message = {
             id: (Date.now() + 1).toString(),
-            content: data.message || data.output || data.result || "I received your message!",
+            content: imageUrlMatch ? "Here's your enhanced image!" : messageContent,
             isUser: false,
             timestamp: new Date(),
+            image: imageUrlMatch ? imageUrlMatch[0] : undefined,
           };
           setMessages(prev => [...prev, botMessage]);
         }
