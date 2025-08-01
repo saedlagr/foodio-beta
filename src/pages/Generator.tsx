@@ -25,6 +25,8 @@ interface ProcessedImage {
   timestamp: Date;
   supabaseFileName?: string;
   dbRecordId?: string;
+  progress?: number;
+  progressMessage?: string;
 }
 
 export const Generator = () => {
@@ -39,12 +41,99 @@ export const Generator = () => {
   const { getUserTokens } = useTokens();
   const navigate = useNavigate();
   const [userTokens, setUserTokens] = useState<number>(0);
+  const realtimeChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   useEffect(() => {
     if (user?.id) {
       getUserTokens(user.id).then(setUserTokens);
     }
   }, [user?.id, getUserTokens]);
+
+  // Set up Supabase Realtime subscription for instant updates
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const setupRealtimeSubscription = async () => {
+      // Create a channel for image processing updates
+      const channel = supabase
+        .channel('image-processing-updates')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'images',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('Realtime update received:', payload);
+            
+            const { new: newRecord, old: oldRecord } = payload;
+            
+            // Find the corresponding processed image
+            const processedImageIndex = processedImages.findIndex(img => 
+              img.dbRecordId === newRecord.id
+            );
+            
+            if (processedImageIndex !== -1) {
+              const metadata = newRecord.metadata as Record<string, unknown>;
+              const updatedImage = { ...processedImages[processedImageIndex] };
+              
+              // Update based on processing status
+              if (metadata?.processing_completed && metadata?.enhanced_image_url) {
+                updatedImage.status = 'completed';
+                updatedImage.processedUrl = metadata.enhanced_image_url;
+                updatedImage.progressMessage = "Enhancement complete!";
+                
+                toast({
+                  title: "🎉 Processing completed!",
+                  description: "Your food image has been successfully enhanced!",
+                });
+                
+                // Refresh tokens
+                getUserTokens(user.id).then(setUserTokens);
+                
+              } else if (metadata?.processing_failed) {
+                updatedImage.status = 'error';
+                updatedImage.progressMessage = "Processing failed";
+                
+                toast({
+                  title: "Processing failed",
+                  description: metadata?.processing_error || "Image processing failed. Please try again.",
+                  variant: "destructive",
+                });
+                
+              } else if (metadata?.processing_started) {
+                // Processing started - ensure status is processing
+                updatedImage.status = 'processing';
+                updatedImage.progressMessage = "AI processing started...";
+              }
+              
+              // Update the specific image in the array
+              setProcessedImages(prev => {
+                const newImages = [...prev];
+                newImages[processedImageIndex] = updatedImage;
+                return newImages;
+              });
+            }
+          }
+        )
+        .subscribe((status) => {
+          console.log('Realtime subscription status:', status);
+        });
+
+      realtimeChannelRef.current = channel;
+    };
+
+    setupRealtimeSubscription();
+
+    // Cleanup subscription on unmount
+    return () => {
+      if (realtimeChannelRef.current) {
+        supabase.removeChannel(realtimeChannelRef.current);
+      }
+    };
+  }, [user?.id, processedImages, getUserTokens, toast]);
 
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -151,8 +240,8 @@ export const Generator = () => {
       }
 
       toast({
-        title: "Images processing started",
-        description: `${selectedImages.length} image(s) uploaded and sent for transformation. Processing may take 3-4 minutes.`,
+        title: "🚀 Processing started!",
+        description: `${selectedImages.length} image(s) uploaded for AI enhancement. You'll see live progress below. Processing typically takes 3-4 minutes.`,
       });
 
       setSelectedImages([]);
@@ -173,22 +262,57 @@ export const Generator = () => {
   };
 
   const pollForCompletion = async (imageId: string, dbRecordId: string) => {
-    const maxPollingTime = 5 * 60 * 1000; // 5 minutes
-    const pollingInterval = 10000; // 10 seconds
+    const maxPollingTime = 8 * 60 * 1000; // 8 minutes (increased from 5)
+    const pollingInterval = 15000; // 15 seconds (increased from 10)
     const startTime = Date.now();
+    let lastStatusUpdate = Date.now();
+    let consecutiveErrors = 0;
+    const maxConsecutiveErrors = 3;
+
+    // Enhanced status messages based on elapsed time
+    const getStatusMessage = (elapsedMs: number) => {
+      const elapsedMinutes = Math.floor(elapsedMs / 60000);
+      const remainingMinutes = Math.max(0, Math.ceil((maxPollingTime - elapsedMs) / 60000));
+      
+      if (elapsedMinutes < 1) return "Initializing AI processing...";
+      if (elapsedMinutes < 2) return "Analyzing food image composition...";
+      if (elapsedMinutes < 3) return "Generating enhancement prompts...";
+      if (elapsedMinutes < 4) return "Processing with AI models...";
+      if (remainingMinutes > 2) return `Still processing... (~${remainingMinutes}min remaining)`;
+      return "Finalizing your enhanced image...";
+    };
+
+    const updateProgressStatus = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(100, Math.floor((elapsed / maxPollingTime) * 100));
+      
+      // Update status message every 30 seconds
+      if (Date.now() - lastStatusUpdate > 30000) {
+        setProcessedImages(prev => prev.map(img => 
+          img.id === imageId 
+            ? { ...img, progressMessage: getStatusMessage(elapsed) }
+            : img
+        ));
+        lastStatusUpdate = Date.now();
+      }
+      
+      return { elapsed, progress };
+    };
 
     const poll = async () => {
       try {
+        const { elapsed, progress } = updateProgressStatus();
+        
         // Check if we've exceeded max polling time
-        if (Date.now() - startTime > maxPollingTime) {
+        if (elapsed > maxPollingTime) {
           setProcessedImages(prev => prev.map(img => 
             img.id === imageId 
-              ? { ...img, status: 'error' as const }
+              ? { ...img, status: 'error' as const, progressMessage: "Processing timeout - please try again" }
               : img
           ));
           toast({
             title: "Processing timeout",
-            description: "Image processing took too long and was marked as failed",
+            description: "Image processing took too long. This may be due to high demand. Please try again.",
             variant: "destructive",
           });
           return;
@@ -203,11 +327,30 @@ export const Generator = () => {
 
         if (error) {
           console.error('Error checking processing status:', error);
+          consecutiveErrors++;
+          
+          if (consecutiveErrors >= maxConsecutiveErrors) {
+            setProcessedImages(prev => prev.map(img => 
+              img.id === imageId 
+                ? { ...img, status: 'error' as const, progressMessage: "Connection error - please check your internet" }
+                : img
+            ));
+            toast({
+              title: "Connection error",
+              description: "Unable to check processing status. Please check your internet connection.",
+              variant: "destructive",
+            });
+            return;
+          }
+          
           setTimeout(poll, pollingInterval);
           return;
         }
 
-        const metadata = data.metadata as any;
+        // Reset error counter on successful request
+        consecutiveErrors = 0;
+
+        const metadata = data.metadata as Record<string, unknown>;
         
         if (metadata?.processing_completed && metadata?.enhanced_image_url) {
           // Processing completed successfully - update with the enhanced image URL
@@ -216,14 +359,15 @@ export const Generator = () => {
               ? { 
                   ...img, 
                   status: 'completed' as const,
-                  processedUrl: metadata.enhanced_image_url // Use the enhanced image URL from n8n
+                  processedUrl: metadata.enhanced_image_url,
+                  progressMessage: "Enhancement complete!"
                 }
               : img
           ));
           
           toast({
-            title: "Processing completed",
-            description: "Your image has been successfully enhanced!",
+            title: "Processing completed! 🎉",
+            description: "Your food image has been successfully enhanced and made more appetizing!",
           });
           
           // Refresh user tokens
@@ -235,29 +379,46 @@ export const Generator = () => {
           // Processing failed
           setProcessedImages(prev => prev.map(img => 
             img.id === imageId 
-              ? { ...img, status: 'error' as const }
+              ? { ...img, status: 'error' as const, progressMessage: "Processing failed" }
               : img
           ));
           
           toast({
             title: "Processing failed",
-            description: metadata?.processing_error || "Image processing failed",
+            description: metadata?.processing_error || "Image processing failed. Please try again.",
             variant: "destructive",
           });
           
         } else {
-          // Still processing, continue polling
+          // Still processing - update progress and continue polling
+          setProcessedImages(prev => prev.map(img => 
+            img.id === imageId 
+              ? { ...img, progress: progress, progressMessage: getStatusMessage(elapsed) }
+              : img
+          ));
+          
           setTimeout(poll, pollingInterval);
         }
 
       } catch (error) {
         console.error('Error during polling:', error);
+        consecutiveErrors++;
+        
+        if (consecutiveErrors >= maxConsecutiveErrors) {
+          setProcessedImages(prev => prev.map(img => 
+            img.id === imageId 
+              ? { ...img, status: 'error' as const, progressMessage: "Unexpected error occurred" }
+              : img
+          ));
+          return;
+        }
+        
         setTimeout(poll, pollingInterval);
       }
     };
 
     // Start polling after a short delay
-    setTimeout(poll, 5000);
+    setTimeout(poll, 3000);
   };
 
   const getStatusColor = (status: ProcessedImage['status']) => {
@@ -319,6 +480,79 @@ export const Generator = () => {
     }
     
     setDeleteImageId(null);
+  };
+
+  const handleRetryProcessing = async (imageId: string) => {
+    const imageToRetry = processedImages.find(img => img.id === imageId);
+    if (!imageToRetry || !imageToRetry.dbRecordId) return;
+
+    try {
+      // Reset status to processing
+      setProcessedImages(prev => prev.map(img => 
+        img.id === imageId 
+          ? { ...img, status: 'processing' as const, progressMessage: "Retrying processing..." }
+          : img
+      ));
+
+      // Check current status in database
+      const { data, error } = await supabase
+        .from('images')
+        .select('metadata')
+        .eq('id', imageToRetry.dbRecordId)
+        .single();
+
+      if (error) {
+        throw new Error('Failed to check image status');
+      }
+
+      const metadata = data.metadata as Record<string, unknown>;
+      
+      if (metadata?.processing_completed && metadata?.enhanced_image_url) {
+        // Image was actually completed, update UI
+        setProcessedImages(prev => prev.map(img => 
+          img.id === imageId 
+            ? { 
+                ...img, 
+                status: 'completed' as const,
+                processedUrl: metadata.enhanced_image_url,
+                progressMessage: "Enhancement complete!"
+              }
+            : img
+        ));
+        
+        toast({
+          title: "Image found!",
+          description: "Your image processing was actually completed!",
+        });
+      } else if (metadata?.processing_failed) {
+        // Still failed, try to retrigger processing
+        toast({
+          title: "Still processing",
+          description: "The image is still being processed. Please wait a bit longer.",
+        });
+      } else {
+        // Restart polling
+        pollForCompletion(imageId, imageToRetry.dbRecordId);
+        toast({
+          title: "Retry started",
+          description: "Checking processing status again...",
+        });
+      }
+
+    } catch (error) {
+      console.error('Error retrying processing:', error);
+      setProcessedImages(prev => prev.map(img => 
+        img.id === imageId 
+          ? { ...img, status: 'error' as const, progressMessage: "Retry failed" }
+          : img
+      ));
+      
+      toast({
+        title: "Retry failed",
+        description: "Unable to retry processing. Please try uploading again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -472,17 +706,58 @@ export const Generator = () => {
                                {image.timestamp.toLocaleTimeString()}
                              </p>
                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className={`w-3 h-3 rounded-full ${getStatusColor(image.status)}`} />
-                              <span className="text-sm font-medium">{getStatusText(image.status)}</span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setDeleteImageId(image.id)}
-                                className="ml-2 p-1 h-8 w-8"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
+                            <div className="flex flex-col gap-2">
+                              <div className="flex items-center gap-2">
+                                <div className={`w-3 h-3 rounded-full ${getStatusColor(image.status)}`} />
+                                <span className="text-sm font-medium">{getStatusText(image.status)}</span>
+                                
+                                {/* Retry button for failed images */}
+                                {image.status === 'error' && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleRetryProcessing(image.id)}
+                                    className="ml-2 h-8 px-3 text-xs"
+                                  >
+                                    Retry
+                                  </Button>
+                                )}
+                                
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setDeleteImageId(image.id)}
+                                  className="ml-2 p-1 h-8 w-8"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                              
+                              {/* Progress indicator for processing images */}
+                              {image.status === 'processing' && (
+                                <div className="space-y-2">
+                                  {image.progress !== undefined && (
+                                    <div className="w-full bg-muted rounded-full h-2">
+                                      <div 
+                                        className="bg-blue-500 h-2 rounded-full transition-all duration-1000"
+                                        style={{ width: `${image.progress}%` }}
+                                      />
+                                    </div>
+                                  )}
+                                  {image.progressMessage && (
+                                    <p className="text-xs text-muted-foreground">
+                                      {image.progressMessage}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                              
+                              {/* Error message for failed images */}
+                              {image.status === 'error' && image.progressMessage && (
+                                <p className="text-xs text-red-400">
+                                  {image.progressMessage}
+                                </p>
+                              )}
                             </div>
                          </div>
                          
