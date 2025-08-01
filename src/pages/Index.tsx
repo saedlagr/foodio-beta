@@ -346,11 +346,11 @@ const Index = () => {
                             <div className="flex items-center justify-center h-full text-muted-foreground">
                               Processing failed
                             </div>
-                          ) : (
-                            <div className="flex items-center justify-center h-full text-muted-foreground">
-                              {image.status === 'uploading' ? 'Uploading...' : 'Processing...'}
-                            </div>
-                          )}
+                           ) : (
+                             <div className="flex items-center justify-center h-full text-muted-foreground">
+                               {image.status === 'uploading' && 'Uploading...'}
+                             </div>
+                           )}
                         </div>
                       </div>
                     </div>
