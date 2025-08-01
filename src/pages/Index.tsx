@@ -323,8 +323,16 @@ const Index = () => {
         
         if (result.success) {
           // Check if this indicates background processing has started
-          if (result.message.includes("background") || result.message.includes("processing")) {
-            // Start the 2-minute cooking animation
+          console.log('Upload result:', result);
+          console.log('Checking conditions:', {
+            hasBackground: result.message.includes("background"),
+            hasProcessing: result.message.includes("processing"),
+            hasStatus: result.processing_status === "started"
+          });
+          
+          if (result.message.includes("background") || result.message.includes("processing") || result.processing_status === "started") {
+            console.log('Starting cooking animation - 2.5 minutes');
+            // Start the 2.5-minute cooking animation
             setIsProcessingImage(true);
             
             // Set timer to stop the animation and deliver the image after 2 minutes

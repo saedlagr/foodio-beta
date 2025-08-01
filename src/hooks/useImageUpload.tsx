@@ -8,6 +8,7 @@ interface UploadResult {
   image_id?: string;
   image_url?: string;
   tokens_remaining?: number;
+  processing_status?: string;
   error?: string;
 }
 
