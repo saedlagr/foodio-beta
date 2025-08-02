@@ -8,7 +8,12 @@ import { PremiumHeader } from "@/components/PremiumHeader";
 import { PremiumUploadArea } from "@/components/PremiumUploadArea";
 import { PremiumProcessingHistory } from "@/components/PremiumProcessingHistory";
 import { PremiumSettingsSidebar } from "@/components/PremiumSettingsSidebar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Loader2, Sparkles, User, LogOut } from "lucide-react";
 
