@@ -8,7 +8,9 @@ import { PremiumHeader } from "@/components/PremiumHeader";
 import { PremiumUploadArea } from "@/components/PremiumUploadArea";
 import { PremiumProcessingHistory } from "@/components/PremiumProcessingHistory";
 import { PremiumSettingsSidebar } from "@/components/PremiumSettingsSidebar";
-import { Loader2, Sparkles } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Loader2, Sparkles, User, LogOut } from "lucide-react";
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,7 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { useTokens } from "@/hooks/useTokens";
 import { supabase } from "@/integrations/supabase/client";
 
-interface ProcessedImage {
+export interface ProcessedImage {
   id: string;
   originalUrl: string;
   originalName: string;
@@ -82,7 +84,7 @@ export const Generator = () => {
               // Update based on processing status
               if (metadata?.processing_completed && metadata?.enhanced_image_url) {
                 updatedImage.status = 'completed';
-                updatedImage.processedUrl = metadata.enhanced_image_url;
+                updatedImage.processedUrl = metadata.enhanced_image_url as string;
                 updatedImage.progressMessage = "Enhancement complete!";
                 
                 toast({
@@ -99,7 +101,7 @@ export const Generator = () => {
                 
                 toast({
                   title: "Processing failed",
-                  description: metadata?.processing_error || "Image processing failed. Please try again.",
+                  description: (metadata?.processing_error as string) || "Image processing failed. Please try again.",
                   variant: "destructive",
                 });
                 
@@ -589,7 +591,7 @@ export const Generator = () => {
             ? { 
                 ...img, 
                 status: 'completed' as const,
-                processedUrl: metadata.enhanced_image_url,
+                processedUrl: metadata.enhanced_image_url as string,
                 progressMessage: "Enhancement complete!"
               }
             : img
