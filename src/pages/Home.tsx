@@ -97,26 +97,27 @@ export const Home = () => {
   return <div className="min-h-screen text-white relative overflow-hidden">
       <AnimatedBackground />
       
-      <div className="relative z-10 max-w-7xl mx-auto">
+      <div className="relative z-10 max-w-6xl mx-auto">
         {/* Header */}
-        <header className="flex justify-between items-center p-6 backdrop-blur-sm border-b border-white/10">
-          <img src="/lovable-uploads/592c6a0e-acaf-4769-a4e1-d4b0a60ad014.png" alt="Foodio" className="h-12 w-auto" />
+        <header className="flex justify-between items-center p-8 backdrop-blur-sm">
+          <img src="/lovable-uploads/592c6a0e-acaf-4769-a4e1-d4b0a60ad014.png" alt="Foodio" className="h-10 w-auto" />
           
           <nav className="hidden md:flex items-center space-x-8">
-            <a href="#features" className="text-muted-foreground hover:text-primary transition-colors font-medium">Features</a>
-            <a href="#how-it-works" className="text-muted-foreground hover:text-primary transition-colors font-medium">How It Works</a>
-            <a href="#showcase" className="text-muted-foreground hover:text-primary transition-colors font-medium">Gallery</a>
-            <a href="#pricing" className="text-muted-foreground hover:text-primary transition-colors font-medium">Pricing</a>
-            <Button className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2 font-medium" onClick={() => navigate('/signup')}>
-              Get Started
+            <a href="#" className="text-muted-foreground hover:text-primary transition-colors font-medium">How It Works
+          </a>
+            
+            <a href="#" className="text-muted-foreground hover:text-primary transition-colors font-medium">Pricing</a>
+            
+            <Button variant="outline" className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground backdrop-blur-sm" onClick={() => navigate('/signin')}>
+              Sign In / Sign Up
             </Button>
           </nav>
         </header>
 
         {/* Main Content */}
-        <div className="flex flex-col items-center justify-center px-8 py-16 text-center">
-          <div className="mb-16 animate-fade-in">
-            <h1 className="text-5xl md:text-7xl font-light mb-6 text-foreground leading-tight min-h-[1.2em] flex flex-col items-center justify-center">
+        <div className="flex flex-col items-center justify-center px-8 py-12 text-center">
+          <div className="mb-12 animate-fade-in">
+            <h1 className="text-4xl md:text-6xl font-light mb-4 text-foreground leading-tight min-h-[1.2em] flex flex-col items-center justify-center">
               <span className={`transition-all duration-500 ease-in-out ${isAnimating ? 'opacity-0 transform -translate-y-4 scale-95' : 'opacity-100 transform translate-y-0 scale-100'}`}>
                 <span className="text-foreground">{titles[currentTitleIndex].text} </span>
                 <span className="bg-gradient-to-r from-primary to-orange-400 bg-clip-text text-transparent">
@@ -126,151 +127,101 @@ export const Home = () => {
               </span>
             </h1>
             
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed mb-8">
-              Transform smartphone food photos into studio-quality images using AI. Create warm, authentic visuals that make customers crave your dishes.
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              Transform smartphone food photos into studio-quality images and videos using AI—90% cheaper than traditional photography with guaranteed perfect results.
             </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-4 text-lg font-semibold" onClick={() => navigate('/signup')}>
-                Try It Free
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <Button variant="outline" size="lg" className="border-primary/50 text-primary hover:bg-primary/10 px-8 py-4 text-lg font-semibold">
-                View Gallery
-              </Button>
-            </div>
           </div>
 
-          {/* Feature Showcase */}
-          <div id="features" className="mb-20 max-w-6xl mx-auto">
-            <h2 className="text-4xl font-bold mb-12 text-center">Create Warm, Authentic Food Photos</h2>
-            
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-              <div className="bg-card/30 rounded-xl p-6 border border-primary/10 hover:border-primary/30 transition-all duration-300">
-                <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center mb-4">
-                  <Camera className="h-6 w-6 text-primary" />
+          {/* Demo Video Placeholder */}
+          <div className="mb-12 max-w-4xl mx-auto">
+            <div className="bg-muted/20 rounded-2xl border-2 border-dashed border-muted-foreground/30 p-12 text-center">
+              <div className="flex flex-col items-center space-y-4">
+                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Sparkles className="h-10 w-10 text-primary" />
                 </div>
-                <h3 className="font-semibold text-foreground mb-2">Studio-Quality Results</h3>
-                <p className="text-sm text-muted-foreground">Perfect lighting, composition, and presentation every time</p>
-              </div>
-              
-              <div className="bg-card/30 rounded-xl p-6 border border-primary/10 hover:border-primary/30 transition-all duration-300">
-                <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center mb-4">
-                  <Sparkles className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">Natural Lighting</h3>
-                <p className="text-sm text-muted-foreground">Warm, appetizing lighting that makes food look irresistible</p>
-              </div>
-              
-              <div className="bg-card/30 rounded-xl p-6 border border-primary/10 hover:border-primary/30 transition-all duration-300">
-                <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center mb-4">
-                  <Upload className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">Instant Processing</h3>
-                <p className="text-sm text-muted-foreground">Transform photos in seconds, not hours or days</p>
-              </div>
-              
-              <div className="bg-card/30 rounded-xl p-6 border border-primary/10 hover:border-primary/30 transition-all duration-300">
-                <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center mb-4">
-                  <ImageIcon className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">Professional Styling</h3>
-                <p className="text-sm text-muted-foreground">AI-powered composition and styling expertise</p>
+                <h3 className="text-2xl font-semibold">Demo Video Coming Soon</h3>
+                <p className="text-muted-foreground text-lg max-w-md">
+                  Watch how our AI transforms your food photos in seconds
+                </p>
               </div>
             </div>
           </div>
 
-          {/* How It Works */}
-          <div id="how-it-works" className="mb-20 max-w-4xl mx-auto">
-            <h2 className="text-4xl font-bold mb-12 text-center">How It Works</h2>
+          {/* Mode Toggle */}
+          <div className="flex items-center justify-center mb-8">
             
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl font-bold text-primary">1</span>
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">Upload Your Photo</h3>
-                <p className="text-sm text-muted-foreground">Take a photo with any smartphone and upload it instantly</p>
-              </div>
-              
-              <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl font-bold text-primary">2</span>
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">AI Processing</h3>
-                <p className="text-sm text-muted-foreground">Our AI analyzes and enhances your photo with professional techniques</p>
-              </div>
-              
-              <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl font-bold text-primary">3</span>
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">Download & Use</h3>
-                <p className="text-sm text-muted-foreground">Get your studio-quality photo ready for menus, social media, and ads</p>
-              </div>
-            </div>
           </div>
 
-          {/* Before & After Gallery */}
-          <div id="showcase" className="mb-20 max-w-6xl mx-auto">
-            <h2 className="text-4xl font-bold mb-12 text-center">Amazing Transformations</h2>
-            
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <div className="bg-card/30 rounded-xl overflow-hidden border border-primary/10">
-                <div className="aspect-square bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
-                  <span className="text-muted-foreground">Before</span>
+          {/* Enhanced CTA Section */}
+          <div className="bg-gradient-to-br from-primary/5 to-secondary/5 rounded-3xl p-8 md:p-12 border border-primary/10 backdrop-blur-sm">
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              {/* Left Column - Benefits & Value Props */}
+              <div className="space-y-8">
+                <div>
+                  <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">
+                    Why Choose Foodio?
+                  </h2>
+                  <p className="text-muted-foreground text-lg">
+                    Join thousands of restaurants saving time and money with AI-powered food photography
+                  </p>
                 </div>
-                <div className="p-4">
-                  <h4 className="font-semibold text-foreground mb-1">Amateur Food Photo</h4>
-                  <p className="text-sm text-muted-foreground">Transformed into professional quality</p>
+                
+                <div className="grid gap-4">
+                  <div className="bg-card/30 rounded-xl p-4 border border-primary/10">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                        <Sparkles className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-foreground">90% Cost Savings</h3>
+                        <p className="text-sm text-muted-foreground">Professional photos without the professional price tag</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-card/30 rounded-xl p-4 border border-primary/10">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                        <Camera className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-foreground">Instant Results</h3>
+                        <p className="text-sm text-muted-foreground">Transform photos in seconds, not hours</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-card/30 rounded-xl p-4 border border-primary/10">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                        <ImageIcon className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-foreground">Studio Quality</h3>
+                        <p className="text-sm text-muted-foreground">Perfect lighting, angles, and presentation every time</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
               
-              <div className="bg-card/30 rounded-xl overflow-hidden border border-primary/10">
-                <div className="aspect-square bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
-                  <span className="text-muted-foreground">After</span>
-                </div>
-                <div className="p-4">
-                  <h4 className="font-semibold text-foreground mb-1">Studio-Quality Result</h4>
-                  <p className="text-sm text-muted-foreground">Perfect lighting and composition</p>
-                </div>
-              </div>
-              
-              <div className="bg-card/30 rounded-xl overflow-hidden border border-primary/10">
-                <div className="aspect-square bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
-                  <span className="text-muted-foreground">Before</span>
-                </div>
-                <div className="p-4">
-                  <h4 className="font-semibold text-foreground mb-1">Casual Restaurant Shot</h4>
-                  <p className="text-sm text-muted-foreground">Elevated to premium standard</p>
+              {/* Right Column - CTA */}
+              <div className="text-center md:text-left space-y-6">
+                <div className="bg-card/50 rounded-2xl p-6 border border-primary/20">
+                  <h3 className="text-2xl font-bold mb-4 text-foreground">Ready to Transform Your Food Photos?</h3>
+                  <ul className="space-y-2 text-muted-foreground mb-6">
+                    <li>✓ No photography experience needed</li>
+                    <li>✓ Works with any smartphone camera</li>
+                    <li>✓ Perfect for menus, social media & ads</li>
+                    <li>✓ 100% satisfaction guarantee</li>
+                  </ul>
+                  
+                  <Button size="lg" className="w-full px-8 py-4 text-lg font-semibold bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl mb-4" onClick={() => navigate('/signup')}>
+                    Get Started Today
+                    <ArrowRight className="ml-3 h-6 w-6" />
+                  </Button>
                 </div>
               </div>
-            </div>
-            
-            <div className="text-center mt-8">
-              <Button variant="outline" size="lg" className="border-primary/50 text-primary hover:bg-primary/10 px-8 py-4 text-lg font-semibold">
-                View More Examples
-              </Button>
-            </div>
-          </div>
-
-          {/* Final CTA */}
-          <div className="bg-gradient-to-br from-primary/10 to-secondary/10 rounded-3xl p-12 border border-primary/20 backdrop-blur-sm text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">
-              Start Creating Amazing Food Photos Today
-            </h2>
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join thousands of restaurants and food businesses transforming their visual presence with AI
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-4 text-lg font-semibold" onClick={() => navigate('/signup')}>
-                Get Started Free
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <Button variant="outline" size="lg" className="border-primary/50 text-primary hover:bg-primary/10 px-8 py-4 text-lg font-semibold">
-                Watch Demo
-              </Button>
             </div>
           </div>
 
